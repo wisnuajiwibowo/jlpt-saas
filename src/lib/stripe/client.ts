@@ -1,6 +1,19 @@
 import Stripe from "stripe"
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+// Menggunakan fungsi getter agar objek Stripe baru dibuat saat dipanggil (mencegah eror build jika env kosong)
+let stripeInstance: Stripe | null = null
+
+export function getStripe() {
+  if (!stripeInstance) {
+    stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY || "dummy_key_for_build_passing", {
+      apiVersion: "2024-06-20" as any,
+    })
+  }
+  return stripeInstance
+}
+
+// Tetap ekspor objek stripe untuk kompatibilitas, namun aman saat build
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "dummy_key_for_build_passing", {
   apiVersion: "2024-06-20" as any,
 })
 
