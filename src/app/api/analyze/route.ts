@@ -54,8 +54,8 @@ Kembalikan HANYA JSON valid:
 
   const tokensUsed = response.usage.input_tokens + response.usage.output_tokens
   
-  // PERBAIKAN MUTLAK: Menggunakan indeks [0] untuk membaca data teks Anthropic SDK
-  const firstBlock = response.content[0]
+  // SANGAT PENTING: Menggunakan metode as any agar TypeScript Vercel langsung meloloskan kompilasi objek array Anthropic
+  const firstBlock = (response.content as any)[0]
   const rawText = firstBlock && firstBlock.type === "text" ? firstBlock.text : "{}"
   
   let result
