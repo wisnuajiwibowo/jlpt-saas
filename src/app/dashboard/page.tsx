@@ -33,12 +33,12 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[#fafafa] text-foreground flex font-sans">
-      {/* 1. SIDEBAR KIRI (Gaya Eksklusif Nihongo Juku) */}
+      {/* 1. SIDEBAR KIRI (Gaya Eksklusif DaijiNihongo) */}
       <aside className="w-64 border-r border-slate-100 bg-white hidden md:flex flex-col justify-between sticky top-0 h-screen p-5">
         <div className="space-y-8">
           {/* Logo Brand */}
           <div className="flex items-center space-x-2 px-2 py-1">
-            <span className="text-xl font-bold tracking-tight text-[#3b3c95]">🎌 Nihongo Juku</span>
+            <span className="text-xl font-bold tracking-tight text-[#3b3c95]">🎌 DaijiNihongo</span>
           </div>
           
           {/* Menu Navigasi Aktif */}
@@ -111,7 +111,7 @@ export default async function DashboardPage() {
               Konnichiwa, {profile?.full_name || "Pelajar"}! 🎌
             </h1>
             <p className="text-slate-500 text-sm max-w-xl leading-relaxed">
-              Selamat datang di Nihongo Juku. Silakan buka ruang belajar di sidebar kiri atau pilih langsung paket kuis di bawah ini!
+              Selamat datang di DaijiNihongo. Silakan buka ruang belajar di sidebar kiri atau pilih langsung paket kuis di bawah ini!
             </p>
           </div>
           <div className="w-full md:w-48 space-y-1 bg-[#fafafa] p-3 rounded-xl border border-slate-100">

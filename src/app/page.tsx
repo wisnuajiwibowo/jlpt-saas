@@ -9,7 +9,7 @@ export default function LandingPage() {
       <header className="border-b border-slate-100 bg-white/80 backdrop-blur sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <span className="text-xl font-bold tracking-tight text-[#3b3c95]">🎌 Nihongo Juku</span>
+            <span className="text-xl font-bold tracking-tight text-[#3b3c95]">🎌 DaijiNihongo</span>
           </div>
           <nav className="flex items-center space-x-4">
             <Link href="/login">
@@ -35,7 +35,7 @@ export default function LandingPage() {
               Kuasai Bahasa Jepang dengan<br />Disiplin dan Terarah
             </h1>
             <p className="text-base md:text-lg text-indigo-100 max-w-2xl mx-auto font-normal leading-relaxed">
-              Nihongo Juku adalah pendamping belajar yang dirancang khusus untuk pelajar Indonesia yang ingin menaklukkan ujian JLPT, meraih beasiswa sekolah, hingga persiapan karir industri di Jepang.
+              DaijiNihongo adalah pendamping belajar yang dirancang khusus untuk pelajar Indonesia yang ingin menaklukkan ujian JLPT, meraih beasiswa sekolah, hingga persiapan karir industri di Jepang.
             </p>
             <div className="pt-4">
               <Link href="/login">
@@ -93,7 +93,7 @@ export default function LandingPage() {
         <section className="bg-white border-y border-slate-100 py-20">
           <div className="container mx-auto px-6 max-w-5xl">
             <div className="text-center max-w-xl mx-auto mb-12 space-y-2">
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-800">Mengapa Nihongo Juku?</h2>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-800">Mengapa DaijiNihongo?</h2>
               <p className="text-slate-500 text-sm">Sistem pembelajaran terstruktur seperti bimbingan belajar langsung di Jepang, disesuaikan untuk ritme Anda.</p>
             </div>
 
@@ -123,7 +123,7 @@ export default function LandingPage() {
       {/* 5. FOOTER */}
       <footer className="border-t border-slate-100 bg-white py-8 text-center text-xs text-slate-400 font-medium">
         <div className="container mx-auto px-6">
-          <p>© 2026 Nihongo Juku. Platform Belajar Bahasa Jepang Terpercaya.</p>
+          <p>© 2026 DaijiNihongo. Platform Belajar Bahasa Jepang Terpercaya.</p>
         </div>
       </footer>
     </div>

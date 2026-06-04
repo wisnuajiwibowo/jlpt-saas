@@ -41,7 +41,7 @@ export default function LoginPage() {
         </CardContent>
 
         <div className="text-center text-[10px] text-slate-400 mt-2 px-4 leading-normal">
-          Dengan masuk, kamu menyetujui rencana belajar terarah Nihongo Juku untuk masa depanmu.
+          Dengan masuk, kamu menyetujui rencana belajar terarah DaijiNihongo untuk masa depanmu.
         </div>
       </Card>
     </div>
