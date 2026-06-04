@@ -1,10 +1,10 @@
 import { supabaseAdmin } from "@/lib/supabase/admin"
 import { NextResponse } from "next/server"
 
+// TAMBAHKAN BARIS INI: Memaksa rute agar bersifat dinamis total agar lolos build Vercel
 export const dynamic = "force-dynamic"
 
 export async function GET() {
-  // Contoh butir soal buatan orisinal dengan gaya analisis Shin Kanzen Master (Anti-Copyright)
   const dummyQuestions = [
     {
       jlpt_level: "N3",
@@ -36,7 +36,7 @@ export async function GET() {
       question_text: "プロの歌手＿＿＿、彼の歌い方は素晴らしい。",
       context_text: null,
       option_a: "として",
-      option_b: "からいうと",
+      option_b: "からいうto",
       option_c: "だけに",
       option_d: "ならではの",
       correct_option: "C",
@@ -44,10 +44,8 @@ export async function GET() {
     }
   ]
 
-  // Bersihkan data soal lama terlebih dahulu agar tidak duplikat
   await supabaseAdmin.from("jlpt_question_bank").delete().neq("id", "00000000-0000-0000-0000-000000000000")
 
-  // Suntikkan data soal baru ke Supabase
   const { data, error } = await supabaseAdmin
     .from("jlpt_question_bank")
     .insert(dummyQuestions)
