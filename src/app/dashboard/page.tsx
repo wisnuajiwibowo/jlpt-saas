@@ -28,27 +28,32 @@ export default async function DashboardPage() {
     { id: "reading", name: "Reading (読解)", icon: "🔍", desc: "Pemahaman wacana" },
   ]
 
-  const currentPlan = profile?.subscriptions?.[0]?.plan_tier || "FREE"
+  const currentPlan = profile?.subscriptions?.?.plan_tier || "FREE"
 
   return (
     <div className="min-h-screen bg-[#fafafa] text-foreground flex font-sans">
-      {/* 1. SIDEBAR KIRI */}
+      {/* 1. SIDEBAR KIRI (Gaya Eksklusif Nihongo Juku) */}
       <aside className="w-64 border-r border-slate-100 bg-white hidden md:flex flex-col justify-between sticky top-0 h-screen p-5">
         <div className="space-y-8">
+          {/* Logo Brand */}
           <div className="flex items-center space-x-2 px-2 py-1">
             <span className="text-xl font-bold tracking-tight text-[#3b3c95]">🎌 Nihongo Juku</span>
           </div>
           
+          {/* Menu Navigasi Aktif */}
           <nav className="space-y-1">
             <Link href="/dashboard" className="block">
               <Button variant="secondary" className="w-full justify-start font-medium text-sm bg-[#eeeffc] text-[#4f46e5] hover:bg-[#eeeffc]">
                 <span className="mr-3 text-base">🎛️</span> Dashboard
               </Button>
             </Link>
-            <Button variant="ghost" className="w-full justify-start text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50" disabled>
-              <span className="mr-3 text-base">📖</span> Belajar
-            </Button>
-            <Button variant="ghost" className="w-full justify-start text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50" disabled>
+            {/* PERBAIKAN: Tombol Belajar Aktif dan Menuju ke Rute /dashboard/learn */}
+            <Link href="/dashboard/learn" className="block">
+              <Button variant="ghost" className="w-full justify-start text-sm text-slate-600 hover:bg-slate-50">
+                <span className="mr-3 text-base">📖</span> Belajar
+              </Button>
+            </Link>
+            <Button variant="ghost" className="w-full justify-start text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-40" disabled>
               <span className="mr-3 text-base">🧩</span> Latihan
             </Button>
             <Link href="/dashboard/analyzer" className="block">
@@ -56,7 +61,7 @@ export default async function DashboardPage() {
                 <span className="mr-3 text-base">🤖</span> Analisis AI
               </Button>
             </Link>
-            <Button variant="ghost" className="w-full justify-start text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-50" disabled>
+            <Button variant="ghost" className="w-full justify-start text-sm text-slate-600 hover:bg-slate-50 disabled:opacity-40" disabled>
               <span className="mr-3 text-base">📈</span> Progres
             </Button>
             <Link href="/dashboard/leaderboard" className="block">
@@ -77,6 +82,7 @@ export default async function DashboardPage() {
           </nav>
         </div>
 
+        {/* Profil Bawah */}
         <div className="border-t border-slate-100 pt-4 space-y-3">
           <div className="flex items-center gap-3 px-2">
             <div className="w-9 h-9 rounded-full bg-[#eeeffc] flex items-center justify-center font-bold text-[#4f46e5] text-sm shadow-inner">
@@ -99,13 +105,14 @@ export default async function DashboardPage() {
 
       {/* AREA KONTEN UTAMA */}
       <main className="flex-1 p-6 md:p-8 space-y-8 max-w-5xl mx-auto overflow-y-auto">
+        {/* Banner Sapaan Atas */}
         <div className="bg-white rounded-2xl border border-slate-100 p-6 md:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1.5">
             <h1 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">
               Konnichiwa, {profile?.full_name || "Pelajar"}! 🎌
             </h1>
             <p className="text-slate-500 text-sm max-w-xl leading-relaxed">
-              Mari lanjutkan progres belajarmu hari ini. Pilih tingkat kompetensi targetmu di bawah untuk memulai sesi kuis acak.
+              Selamat datang di Nihongo Juku. Silakan buka ruang belajar di sidebar kiri atau pilih langsung paket kuis di bawah ini!
             </p>
           </div>
           <div className="w-full md:w-48 space-y-1 bg-[#fafafa] p-3 rounded-xl border border-slate-100">
@@ -120,6 +127,7 @@ export default async function DashboardPage() {
           </div>
         </div>
 
+        {/* DAFTAR MATERI UTAMA */}
         <div className="space-y-4">
           <div>
             <h2 className="text-lg font-bold text-slate-800 tracking-tight">🎯 Program Belajar: Bank Soal Acak</h2>
