@@ -1,4 +1,4 @@
-"use html"
+"use client"
 
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -28,12 +28,11 @@ export default function LoginPage() {
         </CardHeader>
         
         <CardContent className="pt-4">
-          {/* Tombol Login Google Sekali Klik */}
           <Button 
             onClick={handleGoogleLogin}
+            type="button"
             className="w-full h-10 bg-[#4f46e5] text-white hover:bg-[#3b3c95] font-semibold text-xs rounded-xl shadow-sm flex items-center justify-center gap-3 transition-colors"
           >
-            {/* Ikon G Google Mini */}
             <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
               <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.866-3.577-7.866-8s3.536-8 7.866-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C18.155 2.183 15.465 1 12.24 1M24 12c0 6.627-5.373 12-12 12S0 18.627 0 12 5.373 0 12 0s12 5.373 12 12z"/>
             </svg>
