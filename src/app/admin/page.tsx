@@ -1,7 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { useRouter } from "next/navigation" // Tambahkan router untuk menendang penyusup
+import { createClient } from "@/lib/supabase/client" // Gunakan client auth bawaan
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -20,10 +22,13 @@ interface Question {
 }
 
 export default function AdminPage() {
+  const router = useRouter()
+  const supabase = createClient()
+  const [isAuthorized, setIsAuthorized] = useState(false) // State pengaman admin
+
   const [questions, setQuestions] = useState<Question[]>([])
   const [loading, setLoading] = useState(true)
   
-  // State untuk form input soal baru
   const [level, setLevel] = useState("N5")
   const [type, setType] = useState("grammar")
   const [questionText, setQuestionText] = useState("")
@@ -34,7 +39,23 @@ export default function AdminPage() {
   const [correct, setCorrect] = useState("A")
   const [explanation, setExplanation] = useState("")
 
-  // Ambil semua daftar soal saat halaman dibuka
+  // FUNGSI PENGAMAN: Cek apakah yang membuka halaman ini adalah email Anda asli
+  useEffect(() => {
+    async function checkAdminAccess() {
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      // GANTI teks di bawah ini dengan EMAIL ASLI yang Anda gunakan untuk login Google
+      if (user && user.email === "wisnuajiwibowo@gmail.com") { 
+        setIsAuthorized(true) // Lolos keamanan
+        fetchAllQuestions()
+      } else {
+        alert("🔒 Akses Ditolak! Halaman ini khusus untuk Akun Admin Utama.")
+        router.push("/dashboard") // Tendang penyusup kembali ke dashboard biasa
+      }
+    }
+    checkAdminAccess()
+  }, [])
+
   async function fetchAllQuestions() {
     try {
       const res = await fetch("/api/admin/questions", { cache: 'no-store' })
@@ -47,17 +68,10 @@ export default function AdminPage() {
     }
   }
 
-  useEffect(() => {
-    fetchAllQuestions()
-  }, [])
-
-  // Fungsi Tambah Soal Manual
   async function handleAddQuestion(e: React.FormEvent) {
     e.preventDefault()
-    e.stopPropagation()
-
     if (!questionText || !optA || !optB || !optC || !optD) {
-      alert("Semua kolom (Pertanyaan & Pilihan A-D) wajib diisi manual!");
+      alert("Semua kolom wajib diisi manual!")
       return
     }
 
@@ -81,40 +95,41 @@ export default function AdminPage() {
       const responseData = await res.json()
 
       if (res.ok) {
-        alert("🎉 Sukses! Soal baru berhasil disuntikkan ke Supabase!");
-        // Reset form input
+        alert("🎉 Sukses! Soal baru berhasil disuntikkan ke Supabase!")
         setQuestionText("")
         setOptA("")
         setOptB("")
         setOptC("")
         setOptD("")
         setExplanation("")
-        fetchAllQuestions() // Segarkan daftar di bawah
+        fetchAllQuestions()
       } else {
-        alert(`⚠️ Gagal Menyimpan: ${responseData.error || "Terjadi kesalahan hak akses database (RLS)."}`)
+        alert(`⚠️ Gagal Menyimpan: ${responseData.error}`)
       }
     } catch (err) {
       alert("❌ Gagal terhubung dengan server API.")
     }
   }
 
-  // Fungsi Hapus Soal Manual
   async function handleDeleteQuestion(id: string) {
-    if (!confirm("Apakah Anda 100% yakin ingin menghapus butir soal ini secara permanen dari database cloud?")) return
+    if (!confirm("Apakah Anda 100% yakin ingin menghapus butir soal ini?")) return
 
     try {
       const res = await fetch(`/api/admin/questions?id=${id}`, { method: "DELETE" })
-      const responseData = await res.json()
-
       if (res.ok) {
-        alert("🗑️ Soal berhasil dihapus dari database!");
-        fetchAllQuestions() // Segarkan daftar aktif
+        alert("🗑️ Soal berhasil dihapus dari database!")
+        fetchAllQuestions()
       } else {
-        alert(`⚠️ Gagal menghapus: ${responseData.error || "Akses ditolak oleh Supabase."}`)
+        alert("⚠️ Gagal menghapus soal.")
       }
     } catch (err) {
       alert("❌ Terjadi kesalahan sistem saat mencoba menghapus.")
     }
+  }
+
+  // Jika belum lolos cek email admin, tampilkan layar pemuatan kosong demi keamanan
+  if (!isAuthorized) {
+    return <div className="p-6 text-center text-sm text-muted-foreground animate-pulse">Memverifikasi Hak Akses Kunci Sistem...</div>
   }
 
   return (
@@ -189,14 +204,10 @@ export default function AdminPage() {
 
       {/* DAFTAR SOAL AKTIF & TOMBOL HAPUS */}
       <Card className="shadow-sm border border-muted">
-        <CardHeader>
-          <CardTitle>Daftar Soal di Database ({questions.length})</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle>Daftar Soal di Database ({questions.length})</CardTitle></CardHeader>
         <CardContent>
           {loading ? (
             <div className="text-center text-sm text-muted-foreground py-4 animate-pulse">Memuat tabel soal...</div>
-          ) : questions.length === 0 ? (
-            <div className="text-center text-sm text-muted-foreground py-4">Database kosong. Belum ada soal yang ditambahkan manual.</div>
           ) : (
             <div className="border rounded-md divide-y max-h-96 overflow-y-auto bg-card">
               {questions.map((q) => (
@@ -209,13 +220,7 @@ export default function AdminPage() {
                     </div>
                     <p className="text-sm font-medium text-foreground line-clamp-1">{q.question_text}</p>
                   </div>
-                  <Button 
-                    type="button"
-                    variant="destructive" 
-                    size="sm" 
-                    className="text-xs px-3 py-1 h-auto" 
-                    onClick={() => handleDeleteQuestion(q.id)}
-                  >
+                  <Button type="button" variant="destructive" size="sm" className="text-xs px-3 py-1 h-auto" onClick={() => handleDeleteQuestion(q.id)}>
                     Hapus
                   </Button>
                 </div>
