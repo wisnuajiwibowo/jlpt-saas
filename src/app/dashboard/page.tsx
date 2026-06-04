@@ -28,7 +28,8 @@ export default async function DashboardPage() {
     { id: "reading", name: "Reading (読解)", icon: "🔍", desc: "Pemahaman wacana" },
   ]
 
-  const currentPlan = profile?.subscriptions?.?.plan_tier || "FREE"
+  // PERBAIKAN MUTLAK: Mengambil plan tier secara aman dan bersih tanpa tanda tanya ganda
+  const currentPlan = profile?.subscriptions?.[0]?.plan_tier || "FREE"
 
   return (
     <div className="min-h-screen bg-[#fafafa] text-foreground flex font-sans">
@@ -47,7 +48,6 @@ export default async function DashboardPage() {
                 <span className="mr-3 text-base">🎛️</span> Dashboard
               </Button>
             </Link>
-            {/* PERBAIKAN: Tombol Belajar Aktif dan Menuju ke Rute /dashboard/learn */}
             <Link href="/dashboard/learn" className="block">
               <Button variant="ghost" className="w-full justify-start text-sm text-slate-600 hover:bg-slate-50">
                 <span className="mr-3 text-base">📖</span> Belajar
@@ -105,7 +105,6 @@ export default async function DashboardPage() {
 
       {/* AREA KONTEN UTAMA */}
       <main className="flex-1 p-6 md:p-8 space-y-8 max-w-5xl mx-auto overflow-y-auto">
-        {/* Banner Sapaan Atas */}
         <div className="bg-white rounded-2xl border border-slate-100 p-6 md:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1.5">
             <h1 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">
@@ -127,7 +126,7 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* DAFTAR MATERI UTAMA */}
+        {/* DAFTAR PROGRAM BELAJAR */}
         <div className="space-y-4">
           <div>
             <h2 className="text-lg font-bold text-slate-800 tracking-tight">🎯 Program Belajar: Bank Soal Acak</h2>
