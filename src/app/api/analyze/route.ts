@@ -53,7 +53,9 @@ Kembalikan HANYA JSON valid:
   })
 
   const tokensUsed = response.usage.input_tokens + response.usage.output_tokens
-  const firstBlock = response.content
+  
+  // PERBAIKAN MUTLAK: Menggunakan indeks [0] untuk membaca data teks Anthropic SDK
+  const firstBlock = response.content[0]
   const rawText = firstBlock && firstBlock.type === "text" ? firstBlock.text : "{}"
   
   let result
