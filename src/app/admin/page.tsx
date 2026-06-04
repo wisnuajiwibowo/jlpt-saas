@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation" // Tambahkan router untuk menendang penyusup
-import { createClient } from "@/lib/supabase/client" // Gunakan client auth bawaan
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -24,7 +24,7 @@ interface Question {
 export default function AdminPage() {
   const router = useRouter()
   const supabase = createClient()
-  const [isAuthorized, setIsAuthorized] = useState(false) // State pengaman admin
+  const [isAuthorized, setIsAuthorized] = useState(false)
 
   const [questions, setQuestions] = useState<Question[]>([])
   const [loading, setLoading] = useState(true)
@@ -39,18 +39,17 @@ export default function AdminPage() {
   const [correct, setCorrect] = useState("A")
   const [explanation, setExplanation] = useState("")
 
-  // FUNGSI PENGAMAN: Cek apakah yang membuka halaman ini adalah email Anda asli
   useEffect(() => {
     async function checkAdminAccess() {
       const { data: { user } } = await supabase.auth.getUser()
       
-      // GANTI teks di bawah ini dengan EMAIL ASLI yang Anda gunakan untuk login Google
-      if (user && user.email === "wisnuajiwibowo@gmail.com") { 
-        setIsAuthorized(true) // Lolos keamanan
+      // SUDAH DIUBAH MUTLAK: Mengunci gerbang hanya untuk email Anda asli
+      if (user && user.email === "wisnuajisyafiq@gmail.com") { 
+        setIsAuthorized(true)
         fetchAllQuestions()
       } else {
         alert("🔒 Akses Ditolak! Halaman ini khusus untuk Akun Admin Utama.")
-        router.push("/dashboard") // Tendang penyusup kembali ke dashboard biasa
+        router.push("/dashboard")
       }
     }
     checkAdminAccess()
@@ -127,7 +126,6 @@ export default function AdminPage() {
     }
   }
 
-  // Jika belum lolos cek email admin, tampilkan layar pemuatan kosong demi keamanan
   if (!isAuthorized) {
     return <div className="p-6 text-center text-sm text-muted-foreground animate-pulse">Memverifikasi Hak Akses Kunci Sistem...</div>
   }
@@ -139,7 +137,6 @@ export default function AdminPage() {
         <p className="text-muted-foreground text-sm mt-1">Kelola manajemen penambahan dan penghapusan butir soal secara manual.</p>
       </div>
 
-      {/* FORMULIR TAMBAH SOAL */}
       <Card className="shadow-md border border-muted">
         <CardHeader>
           <CardTitle>Tambah Butir Soal Baru</CardTitle>
@@ -202,7 +199,6 @@ export default function AdminPage() {
         </CardContent>
       </Card>
 
-      {/* DAFTAR SOAL AKTIF & TOMBOL HAPUS */}
       <Card className="shadow-sm border border-muted">
         <CardHeader><CardTitle>Daftar Soal di Database ({questions.length})</CardTitle></CardHeader>
         <CardContent>
