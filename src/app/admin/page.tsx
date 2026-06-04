@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -37,7 +37,7 @@ export default function AdminPage() {
   // Ambil semua daftar soal saat halaman dibuka
   async function fetchAllQuestions() {
     try {
-      const res = await fetch("/api/admin/questions")
+      const res = await fetch("/api/admin/questions", { cache: 'no-store' })
       const data = await res.json()
       if (res.ok) setQuestions(data)
     } catch (err) {
@@ -54,8 +54,10 @@ export default function AdminPage() {
   // Fungsi Tambah Soal Manual
   async function handleAddQuestion(e: React.FormEvent) {
     e.preventDefault()
+    e.stopPropagation()
+
     if (!questionText || !optA || !optB || !optC || !optD) {
-      alert("Semua kolom wajib diisi!")
+      alert("Semua kolom (Pertanyaan & Pilihan A-D) wajib diisi manual!");
       return
     }
 
@@ -72,12 +74,14 @@ export default function AdminPage() {
           option_c: optC,
           option_d: optD,
           correct_option: correct,
-          explanation
+          explanation: explanation || ""
         })
       })
 
+      const responseData = await res.json()
+
       if (res.ok) {
-        alert("Soal berhasil ditambahkan ke Supabase!")
+        alert("🎉 Sukses! Soal baru berhasil disuntikkan ke Supabase!");
         // Reset form input
         setQuestionText("")
         setOptA("")
@@ -85,30 +89,31 @@ export default function AdminPage() {
         setOptC("")
         setOptD("")
         setExplanation("")
-        fetchAllQuestions() // Refresh daftar tabel bawah
+        fetchAllQuestions() // Segarkan daftar di bawah
       } else {
-        const errData = await res.json()
-        alert(`Gagal: ${errData.error}`)
+        alert(`⚠️ Gagal Menyimpan: ${responseData.error || "Terjadi kesalahan hak akses database (RLS)."}`)
       }
     } catch (err) {
-      alert("Terjadi kesalahan sistem")
+      alert("❌ Gagal terhubung dengan server API.")
     }
   }
 
   // Fungsi Hapus Soal Manual
   async function handleDeleteQuestion(id: string) {
-    if (!confirm("Apakah Anda yakin ingin menghapus butir soal ini secara permanen dari database?")) return
+    if (!confirm("Apakah Anda 100% yakin ingin menghapus butir soal ini secara permanen dari database cloud?")) return
 
     try {
       const res = await fetch(`/api/admin/questions?id=${id}`, { method: "DELETE" })
+      const responseData = await res.json()
+
       if (res.ok) {
-        alert("Soal berhasil terhapus!")
-        fetchAllQuestions()
+        alert("🗑️ Soal berhasil dihapus dari database!");
+        fetchAllQuestions() // Segarkan daftar aktif
       } else {
-        alert("Gagal menghapus soal")
+        alert(`⚠️ Gagal menghapus: ${responseData.error || "Akses ditolak oleh Supabase."}`)
       }
     } catch (err) {
-      alert("Terjadi kesalahan sistem saat menghapus")
+      alert("❌ Terjadi kesalahan sistem saat mencoba menghapus.")
     }
   }
 
@@ -120,7 +125,7 @@ export default function AdminPage() {
       </div>
 
       {/* FORMULIR TAMBAH SOAL */}
-      <Card className="shadow-md">
+      <Card className="shadow-md border border-muted">
         <CardHeader>
           <CardTitle>Tambah Butir Soal Baru</CardTitle>
           <CardDescription>Gunakan modifikasi teks mandiri agar aman dari hak cipta buku.</CardDescription>
@@ -130,7 +135,7 @@ export default function AdminPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <Label>Tingkatan Level</Label>
-                <select className="w-full mt-1.5 p-2 rounded-md border bg-background text-sm" value={level} onChange={(e) => setLevel(e.target.value)}>
+                <select className="w-full mt-1.5 p-2 rounded-md border bg-background text-sm text-foreground" value={level} onChange={(e) => setLevel(e.target.value)}>
                   <option value="N5">JLPT N5</option>
                   <option value="N4">JLPT N4</option>
                   <option value="N3">JLPT N3</option>
@@ -140,7 +145,7 @@ export default function AdminPage() {
               </div>
               <div>
                 <Label>Jenis Modul</Label>
-                <select className="w-full mt-1.5 p-2 rounded-md border bg-background text-sm" value={type} onChange={(e) => setType(e.target.value)}>
+                <select className="w-full mt-1.5 p-2 rounded-md border bg-background text-sm text-foreground" value={type} onChange={(e) => setType(e.target.value)}>
                   <option value="grammar">Grammar (文法)</option>
                   <option value="kanji">Kanji (漢字)</option>
                   <option value="vocab">Vocabulary (語彙)</option>
@@ -149,7 +154,7 @@ export default function AdminPage() {
               </div>
               <div>
                 <Label>Kunci Jawaban</Label>
-                <select className="w-full mt-1.5 p-2 rounded-md border bg-background text-sm" value={correct} onChange={(e) => setCorrect(e.target.value)}>
+                <select className="w-full mt-1.5 p-2 rounded-md border bg-background text-sm text-foreground" value={correct} onChange={(e) => setCorrect(e.target.value)}>
                   <option value="A">Opsi A</option>
                   <option value="B">Opsi B</option>
                   <option value="C">Opsi C</option>
@@ -160,38 +165,42 @@ export default function AdminPage() {
 
             <div className="space-y-1.5">
               <Label>Kalimat Pertanyaan Utama</Label>
-              <Input placeholder="Contoh: 日本の生活に慣れる＿＿＿、日本語が上手になってきた。" value={questionText} onChange={(e) => setQuestionText(e.target.value)} />
+              <Input type="text" placeholder="Contoh: 日本の生活に慣れる＿＿＿、日本語が上手になってきた。" value={questionText} onChange={(e) => setQuestionText(e.target.value)} />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5"><Label>Pilihan A</Label><Input value={optA} onChange={(e) => setOptA(e.target.value)} /></div>
-              <div className="space-y-1.5"><Label>Pilihan B</Label><Input value={optB} onChange={(e) => setOptB(e.target.value)} /></div>
-              <div className="space-y-1.5"><Label>Pilihan C</Label><Input value={optC} onChange={(e) => setOptC(e.target.value)} /></div>
-              <div className="space-y-1.5"><Label>Pilihan D</Label><Input value={optD} onChange={(e) => setOptD(e.target.value)} /></div>
+              <div className="space-y-1.5"><Label>Pilihan A</Label><Input type="text" value={optA} onChange={(e) => setOptA(e.target.value)} /></div>
+              <div className="space-y-1.5"><Label>Pilihan B</Label><Input type="text" value={optB} onChange={(e) => setOptB(e.target.value)} /></div>
+              <div className="space-y-1.5"><Label>Pilihan C</Label><Input type="text" value={optC} onChange={(e) => setOptC(e.target.value)} /></div>
+              <div className="space-y-1.5"><Label>Pilihan D</Label><Input type="text" value={optD} onChange={(e) => setOptD(e.target.value)} /></div>
             </div>
 
             <div className="space-y-1.5">
               <Label>Boks Pembahasan & Analisis Jebakan (Gaya Shin Kanzen Master)</Label>
-              <textarea className="w-full p-3 rounded-md border bg-background text-sm h-24" placeholder="Tuliskan alasan jawaban benar dan pembeda nuansa antar partikel di sini..." value={explanation} onChange={(e) => setExplanation(e.target.value)} />
+              <textarea className="w-full p-3 rounded-md border bg-background text-sm text-foreground h-24" placeholder="Tuliskan alasan jawaban benar dan pembeda nuansa antar partikel di sini..." value={explanation} onChange={(e) => setExplanation(e.target.value)} />
             </div>
 
-            <Button type="submit" className="w-full font-semibold">Simpan dan Suntik ke Supabase</Button>
+            <Button type="submit" className="w-full font-semibold bg-primary text-primary-foreground">
+              Simpan dan Suntik ke Supabase
+            </Button>
           </form>
         </CardContent>
       </Card>
 
       {/* DAFTAR SOAL AKTIF & TOMBOL HAPUS */}
-      <Card className="shadow-sm">
-        <CardHeader><CardTitle>Daftar Soal di Database ({questions.length})</CardTitle></CardHeader>
+      <Card className="shadow-sm border border-muted">
+        <CardHeader>
+          <CardTitle>Daftar Soal di Database ({questions.length})</CardTitle>
+        </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center text-sm text-muted-foreground py-4">Memuat tabel soal...</div>
+            <div className="text-center text-sm text-muted-foreground py-4 animate-pulse">Memuat tabel soal...</div>
           ) : questions.length === 0 ? (
-            <div className="text-center text-sm text-muted-foreground py-4">Database kosong.</div>
+            <div className="text-center text-sm text-muted-foreground py-4">Database kosong. Belum ada soal yang ditambahkan manual.</div>
           ) : (
-            <div className="border rounded-md divide-y max-h-96 overflow-y-auto">
+            <div className="border rounded-md divide-y max-h-96 overflow-y-auto bg-card">
               {questions.map((q) => (
-                <div key={q.id} className="p-4 flex items-center justify-between gap-4 bg-card/40 hover:bg-card">
+                <div key={q.id} className="p-4 flex items-center justify-between gap-4 bg-card/40 hover:bg-muted/30 transition-colors">
                   <div className="space-y-1 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-extrabold bg-primary text-primary-foreground px-2 py-0.5 rounded">{q.jlpt_level}</span>
@@ -200,7 +209,15 @@ export default function AdminPage() {
                     </div>
                     <p className="text-sm font-medium text-foreground line-clamp-1">{q.question_text}</p>
                   </div>
-                  <Button variant="destructive" size="sm" className="text-xs px-3 py-1 h-auto" onClick={() => handleDeleteQuestion(q.id)}>Hapus</Button>
+                  <Button 
+                    type="button"
+                    variant="destructive" 
+                    size="sm" 
+                    className="text-xs px-3 py-1 h-auto" 
+                    onClick={() => handleDeleteQuestion(q.id)}
+                  >
+                    Hapus
+                  </Button>
                 </div>
               ))}
             </div>
