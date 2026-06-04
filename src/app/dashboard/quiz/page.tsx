@@ -18,7 +18,6 @@ interface Question {
   explanation: string
 }
 
-// 1. Komponen Utama Kuis yang Membaca URL Parameter
 function QuizContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -33,6 +32,7 @@ function QuizContent() {
   const [score, setScore] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isFinished, setIsFinished] = useState(false) // State baru untuk penanda kuis selesai
 
   useEffect(() => {
     async function fetchQuestions() {
@@ -53,6 +53,30 @@ function QuizContent() {
   if (loading) return <div className="p-6 text-center text-muted-foreground animate-pulse">Memuat bank soal acak JLPT...</div>
   if (error) return <div className="p-6 text-center text-destructive">Eror: {error}</div>
   if (questions.length === 0) return <div className="p-6 text-center text-muted-foreground">Tidak ada soal ditemukan untuk kategori ini.</div>
+
+  // PERBAIKAN UTAMA: Tampilan Skor Akhir Sesi Kuis menggunakan state isFinished
+  if (isFinished || currentIdx >= questions.length) {
+    return (
+      <Card className="text-center shadow-lg border-muted">
+        <CardHeader>
+          <CardTitle className="text-3xl font-bold">Kuis Selesai! 🎉</CardTitle>
+          <CardDescription>Hasil latihan acak JLPT {level} - {type.toUpperCase()}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="text-5xl font-extrabold text-primary">
+            {score} / {questions.length}
+          </div>
+          <p className="text-muted-foreground text-sm max-w-sm mx-auto">
+            Skor akurasi Anda adalah {Math.round((score / questions.length) * 100)}%. Pertahankan kerja bagus Anda!
+          </p>
+        </CardContent>
+        <CardFooter className="flex justify-center gap-4">
+          <Button onClick={() => router.push("/dashboard")}>Kembali ke Dashboard</Button>
+          <Button variant="outline" onClick={() => window.location.reload()}>Coba Lagi</Button>
+        </CardFooter>
+      </Card>
+    )
+  }
 
   const currentQuestion = questions[currentIdx]
   const options = [
@@ -83,31 +107,8 @@ function QuizContent() {
     if (currentIdx + 1 < questions.length) {
       setCurrentIdx((prev) => prev + 1)
     } else {
-      setCurrentIdx(questions.length)
+      setIsFinished(true) // Set selesai, jangan naikkan indeks agar tidak memicu undefined
     }
-  }
-
-  if (currentIdx >= questions.length) {
-    return (
-      <Card className="text-center shadow-lg border-muted">
-        <CardHeader>
-          <CardTitle className="text-3xl font-bold">Kuis Selesai! 🎉</CardTitle>
-          <CardDescription>Hasil latihan acak JLPT {level} - {type.toUpperCase()}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="text-5xl font-extrabold text-primary">
-            {score} / {questions.length}
-          </div>
-          <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-            Skor akurasi Anda adalah {Math.round((score / questions.length) * 100)}%. Pertahankan kerja bagus Anda!
-          </p>
-        </CardContent>
-        <CardFooter className="flex justify-center gap-4">
-          <Button onClick={() => router.push("/dashboard")}>Kembali ke Dashboard</Button>
-          <Button variant="outline" onClick={() => window.location.reload()}>Coba Lagi</Button>
-        </CardFooter>
-      </Card>
-    )
   }
 
   return (
@@ -187,7 +188,6 @@ function QuizContent() {
   )
 }
 
-// 2. Eksport Utama Menggunakan Pembungkus Suspense Sesuai Standar Next.js (Mencegah Prerender Error)
 export default function QuizPage() {
   return (
     <div className="p-6 max-w-2xl mx-auto">
