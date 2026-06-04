@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 
 export default function AnalyzerPage() {
   const [text, setText] = useState("")
@@ -93,7 +94,7 @@ export default function AnalyzerPage() {
                   <h4 className="font-bold text-slate-800">📌 Kosakata Penting (Vocabulary):</h4>
                   <div className="border rounded-lg p-2 bg-slate-50 grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px]">
                     {result.vocabulary?.map((v: any, i: number) => (
-                      <div key={i}>• <strong>{v.word}</strong> ({q => v.reading}): {v.meaning}</div>
+                      <div key={i}>• <strong>{v.word}</strong> ({v.reading}): {v.meaning}</div>
                     ))}
                   </div>
                 </div>
