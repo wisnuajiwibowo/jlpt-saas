@@ -5,7 +5,6 @@ import Anthropic from "@anthropic-ai/sdk"
 import { createHash } from "crypto"
 import { NextResponse } from "next/server"
 
-// Tambahkan baris ini agar Next.js tidak memaksa build statis saat mendeteksi Redis
 export const dynamic = "force-dynamic"
 
 const claude = new Anthropic()
@@ -17,7 +16,7 @@ export async function POST(req: Request) {
 
   const { text, targetLevel } = await req.json()
   if (!text || text.length > 2000) {
-    return NextResponse.json({ error: "Teks tidak valid (max 2000 karakter)" }, { status: 400 })
+    return NextResponse.json({ error: "Teks tidak valid" }, { status: 400 })
   }
 
   const { data: profile } = await supabaseAdmin
@@ -27,7 +26,7 @@ export async function POST(req: Request) {
     .single()
 
   if (!profile || profile.ai_tokens_used >= profile.ai_tokens_quota) {
-    return NextResponse.json({ error: "Token quota habis. Upgrade plan kamu." }, { status: 403 })
+    return NextResponse.json({ error: "Token quota habis" }, { status: 403 })
   }
 
   const cacheKey = `jlpt:v1:${createHash("sha256").update(text + targetLevel).digest("hex")}`
@@ -37,23 +36,24 @@ export async function POST(req: Request) {
   const response = await claude.messages.create({
     model: "claude-3-5-sonnet-20241022",
     max_tokens: 1500,
-    system: `Kamu adalah ahli linguistik Jepang terlatih dengan metodologi Shin Kanzen Master.
-Analisis teks Jepang dan kembalikan HANYA JSON valid (tanpa markdown, tanpa preamble):
+    system: `Kamu adalah ahli linguistik Jepang profesional. Tugasmu adalah menganalisis teks input dan mengadopsi METODOLOGI BELAJAR BELAJAR SHIN KANZEN MASTER secara ketat namun aman dari HAK CIPTA.
+Dilarang menyalin kalimat contoh dari buku fisik manapun. Gunakan keahlianmu untuk memodifikasi total teks dan membuat struktur buatan sendiri yang orisinal.
+
+Kembalikan HANYA JSON valid:
 {
   "jlpt_level": "N3",
   "cefr_level": "B1",
   "difficulty_score": 65,
-  "grammar_points": [{"pattern": "〜ている", "level": "N4", "explanation": "..."}],
+  "grammar_points": [{"pattern": "〜ている", "level": "N4", "explanation": "Penjelasan detail menggunakan gaya analisa Shin Kanzen Master yang berfokus pada perbedaan nuansa penggunaan"}],
   "vocabulary": [{"word": "言葉", "reading": "ことば", "meaning": "kata", "level": "N4"}],
-  "trap_patterns": ["penjelasan jebakan soal JLPT umum yang ada di teks ini"],
-  "adapted_text": "versi teks yang disesuaikan ke level target"
+  "trap_patterns": ["Analisis jebakan distraktor umum yang biasa mengecoh siswa pada teks tipe ini di ujian asli JLPT"],
+  "adapted_text": "Teks orisinal modifikasi buatanmu yang disesuaikan agar pas dengan targetLevel pengguna tanpa melanggar hak cipta buku manapun."
 }`,
     messages: [{ role: "user", content: `Level target: ${targetLevel}\nTeks: ${text}` }],
   })
 
   const tokensUsed = response.usage.input_tokens + response.usage.output_tokens
-  
-  const firstBlock = response.content[0]
+  const firstBlock = response.content
   const rawText = firstBlock && firstBlock.type === "text" ? firstBlock.text : "{}"
   
   let result
