@@ -28,6 +28,9 @@ export default async function DashboardPage() {
     { id: "reading", name: "Reading (読解)", icon: "🔍", desc: "Pemahaman wacana" },
   ]
 
+  // Ekstraksi tingkat membership secara aman untuk indikator profil
+  const currentPlan = profile?.subscriptions?.[0]?.plan_tier || "FREE"
+
   return (
     <div className="min-h-screen bg-[#fafafa] text-foreground flex font-sans">
       {/* 1. SIDEBAR KIRI (Gaya Eksklusif Nihongo Juku) */}
@@ -82,12 +85,12 @@ export default async function DashboardPage() {
               <div className="flex items-center gap-1.5">
                 <span className="text-[9px] font-extrabold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded uppercase">JLPT</span>
                 <span className="text-[9px] font-extrabold bg-[#4f46e5] text-white px-1.5 py-0.5 rounded uppercase tracking-wide">
-                  {profile?.subscriptions?.?.plan_tier || "FREE"}
+                  {currentPlan}
                 </span>
               </div>
             </div>
           </div>
-          <Link href="/logout" className="block">
+          <Link href="/login" className="block">
             <Button variant="ghost" className="w-full justify-start text-xs text-rose-500 hover:bg-rose-50 h-8 font-medium">
               <span className="mr-3 text-sm">🚪</span> Keluar
             </Button>
