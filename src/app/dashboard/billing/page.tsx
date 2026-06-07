@@ -1,49 +1,77 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-
 export default function BillingPage() {
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6 font-sans">
-      <div>
-        <h1 className="text-xl font-bold text-slate-800 tracking-tight">💳 Opsi Keanggotaan & Berlangganan</h1>
-        <p className="text-slate-500 text-xs mt-0.5">Kelola paket langganan Anda secara fleksibel menggunakan integrasi Stripe otomatis.</p>
-      </div>
+    <div className="min-h-screen bg-slate-50 p-6">
+      <div className="max-w-3xl mx-auto space-y-8">
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-        {/* Pro Plan Card */}
-        <Card className="border border-slate-100 shadow-sm rounded-xl bg-white flex flex-col justify-between">
-          <CardHeader className="p-5 pb-2">
-            <CardTitle className="text-base font-bold text-slate-800">Pro Membership</CardTitle>
-            <CardDescription className="text-[11px]">Sempurna untuk tingkat akselerasi menengah</CardDescription>
-            <div className="text-2xl font-extrabold text-primary mt-2">¥1,980 <span className="text-xs font-normal text-slate-400">/ bulan</span></div>
-          </CardHeader>
-          <CardContent className="p-5 pt-3 border-t border-slate-50 text-[11px] text-slate-500 space-y-2">
-            <div>✓ 🔥 500.000 Token AI / Bulan</div>
-            <div>✓ Bedah Pola Jebakan Shin Kanzen</div>
-            <div>✓ Akses Soal Acak Komplit N5 - N2</div>
-          </CardContent>
-          <CardFooter className="p-5 pt-0">
-            <Button className="w-full text-xs bg-[#4f46e5] text-white h-8.5 rounded-lg">Upgrade via Stripe</Button>
-          </CardFooter>
-        </Card>
+        {/* Header */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+          <h1 className="text-lg font-bold text-slate-800">💳 Opsi Keanggotaan & Berlangganan</h1>
+          <p className="text-slate-500 text-xs mt-1">Pilih paket yang sesuai dengan target belajar Anda. Bayar mudah via Stripe.</p>
+        </div>
 
-        {/* Elite Plan Card */}
-        <Card className="border-2 border-[#4f46e5] shadow-md rounded-xl bg-white flex flex-col justify-between relative">
-          <div className="absolute -top-2.5 right-4 bg-[#4f46e5] text-white text-[9px] px-2 py-0.5 rounded-full font-bold">REKOMENDASI</div>
-          <CardHeader className="p-5 pb-2">
-            <CardTitle className="text-base font-bold text-slate-800">N1 Elite Membership</CardTitle>
-            <CardDescription className="text-[11px]">Target kelulusan mutlak tingkat mahir</CardDescription>
-            <div className="text-2xl font-extrabold text-primary mt-2">¥4,980 <span className="text-xs font-normal text-slate-400">/ bulan</span></div>
-          </CardHeader>
-          <CardContent className="p-5 pt-3 border-t border-slate-50 text-[11px] text-slate-500 space-y-2">
-            <div>✓ 💎 2.000.000 Token AI / Bulan</div>
-            <div>✓ Seluruh Fitur Analisis Tanpa Batas</div>
-            <div>✓ Notifikasi Kuitansi Instan Resend</div>
-          </CardContent>
-          <CardFooter className="p-5 pt-0">
-            <Button className="w-full text-xs bg-[#4f46e5] text-white h-8.5 rounded-lg">Pilih Paket Elite</Button>
-          </CardFooter>
-        </Card>
+        {/* Kartu Paket */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          {/* Pro Plan */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-slate-100">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Pro Membership</p>
+              <h2 className="text-2xl font-black text-slate-800">Rp 49.000<span className="text-sm font-normal text-slate-400"> / bulan</span></h2>
+              <p className="text-xs text-slate-500 mt-1">Sempurna untuk akselerasi tingkat menengah</p>
+            </div>
+            <div className="p-6 space-y-3 flex-1">
+              {[
+                "🔥 500.000 Token AI / Bulan",
+                "✅ Bedah Pola Jebakan Shin Kanzen",
+                "✅ Akses Soal Acak Komplit N5 - N2",
+                "✅ Ruang Belajar Mandiri Penuh",
+              ].map((f, i) => (
+                <div key={i} className="flex items-center gap-2 text-xs text-slate-600">
+                  <span>{f}</span>
+                </div>
+              ))}
+            </div>
+            <div className="px-6 pb-6">
+              <button className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold transition">
+                Upgrade via Stripe
+              </button>
+            </div>
+          </div>
+
+          {/* Elite Plan */}
+          <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl shadow-lg overflow-hidden flex flex-col relative">
+            <div className="absolute top-4 right-4 bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+              REKOMENDASI
+            </div>
+            <div className="p-6 border-b border-white/10">
+              <p className="text-xs font-bold text-indigo-200 uppercase tracking-widest mb-2">N1 Elite Membership</p>
+              <h2 className="text-2xl font-black text-white">Rp 129.000<span className="text-sm font-normal text-indigo-200"> / bulan</span></h2>
+              <p className="text-xs text-indigo-200 mt-1">Target kelulusan mutlak tingkat mahir</p>
+            </div>
+            <div className="p-6 space-y-3 flex-1">
+              {[
+                "💎 2.000.000 Token AI / Bulan",
+                "✅ Seluruh Fitur Analisis Tanpa Batas",
+                "✅ Akses Soal N5 - N1 Penuh",
+                "✅ Notifikasi Kuitansi Instan Resend",
+              ].map((f, i) => (
+                <div key={i} className="flex items-center gap-2 text-xs text-white/90">
+                  <span>{f}</span>
+                </div>
+              ))}
+            </div>
+            <div className="px-6 pb-6">
+              <button className="w-full py-3 rounded-xl bg-white text-indigo-700 text-sm font-bold hover:bg-indigo-50 transition">
+                Pilih Paket Elite ✨
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Info tambahan */}
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-center">
+          <p className="text-xs text-slate-500">🔒 Pembayaran aman via <strong>Stripe</strong>. Batalkan kapan saja. Tidak ada biaya tersembunyi.</p>
+        </div>
       </div>
     </div>
   )
