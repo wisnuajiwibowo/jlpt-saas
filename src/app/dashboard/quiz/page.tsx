@@ -30,6 +30,7 @@ function QuizContent() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isFinished, setIsFinished] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     async function fetchQuestions() {
@@ -47,6 +48,23 @@ function QuizContent() {
     fetchQuestions()
   }, [level, type])
 
+  // Auto simpan hasil kuis ke database
+  useEffect(() => {
+    if (isFinished && questions.length > 0) {
+      setSaving(true)
+      fetch("/api/quiz-results", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jlpt_level: level,
+          module_type: type,
+          score,
+          total_questions: questions.length
+        })
+      }).finally(() => setSaving(false))
+    }
+  }, [isFinished])
+
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4">
       <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
@@ -57,21 +75,21 @@ function QuizContent() {
   if (error) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center p-8 bg-red-50 rounded-2xl border border-red-200">
-        <p className="text-red-500 font-medium">⚠️ {error}</p>
+        <p className="text-4xl mb-3">⚠️</p>
+        <p className="text-red-500 font-medium text-sm">{error}</p>
+        <button onClick={() => router.push("/dashboard")} className="mt-4 px-5 py-2 bg-slate-800 text-white text-sm rounded-xl hover:bg-slate-700 transition">
+          Kembali ke Dashboard
+        </button>
       </div>
     </div>
   )
 
   if (questions.length === 0) return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center p-8 bg-slate-50 rounded-2xl border">
+      <div className="text-center p-8 bg-slate-50 rounded-2xl border max-w-sm">
         <p className="text-4xl mb-3">📭</p>
         <p className="text-slate-600 font-medium">Belum ada soal untuk kategori ini.</p>
-        <p className="text-slate-400 text-sm mt-1">Silakan tambah soal melalui panel admin.</p>
-        <button
-          onClick={() => router.push("/dashboard")}
-          className="mt-4 px-5 py-2 bg-indigo-600 text-white text-sm rounded-xl hover:bg-indigo-700 transition"
-        >
+        <button onClick={() => router.push("/dashboard")} className="mt-4 px-5 py-2 bg-indigo-600 text-white text-sm rounded-xl hover:bg-indigo-700 transition">
           Kembali ke Dashboard
         </button>
       </div>
@@ -92,20 +110,21 @@ function QuizContent() {
             <div className="text-6xl mb-3">{emoji}</div>
             <h2 className="text-2xl font-bold">Kuis Selesai!</h2>
             <p className="text-indigo-200 text-sm mt-1">JLPT {level} · {type.toUpperCase()}</p>
+            {saving && <p className="text-indigo-300 text-xs mt-2 animate-pulse">Menyimpan hasil...</p>}
           </div>
           <div className="p-8 text-center space-y-6">
             <div>
-              <div className={`text-6xl font-black ${color}`}>{score}<span className="text-2xl text-slate-400">/{questions.length}</span></div>
+              <div className={`text-6xl font-black ${color}`}>
+                {score}<span className="text-2xl text-slate-400">/{questions.length}</span>
+              </div>
               <div className="mt-2 text-slate-500 text-sm">Jawaban Benar</div>
             </div>
 
-            {/* Progress lingkaran sederhana */}
             <div className="flex items-center justify-center">
               <div className="relative w-28 h-28">
                 <svg className="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
                   <circle cx="50" cy="50" r="40" fill="none" stroke="#e2e8f0" strokeWidth="10" />
-                  <circle
-                    cx="50" cy="50" r="40" fill="none"
+                  <circle cx="50" cy="50" r="40" fill="none"
                     stroke={pct >= 80 ? "#10b981" : pct >= 60 ? "#6366f1" : "#f97316"}
                     strokeWidth="10"
                     strokeDasharray={`${pct * 2.51} 251`}
@@ -121,19 +140,19 @@ function QuizContent() {
             <p className="text-slate-600 text-sm font-medium">{msg}</p>
 
             <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="py-3 rounded-xl border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 transition"
-              >
-                Dashboard
+              <button onClick={() => router.push("/dashboard/progress")}
+                className="py-3 rounded-xl border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 transition">
+                Lihat Progres
               </button>
-              <button
-                onClick={() => window.location.reload()}
-                className="py-3 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition"
-              >
+              <button onClick={() => window.location.reload()}
+                className="py-3 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition">
                 Coba Lagi 🔄
               </button>
             </div>
+            <button onClick={() => router.push("/dashboard")}
+              className="w-full py-2.5 rounded-xl text-slate-500 text-xs hover:text-slate-700 transition">
+              ← Kembali ke Dashboard
+            </button>
           </div>
         </div>
       </div>
@@ -195,8 +214,6 @@ function QuizContent() {
   return (
     <div className="min-h-screen bg-slate-50 flex items-start justify-center p-6 pt-10">
       <div className="w-full max-w-2xl space-y-5">
-
-        {/* Header info soal */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full">{level}</span>
@@ -208,18 +225,12 @@ function QuizContent() {
           </div>
         </div>
 
-        {/* Progress bar */}
         <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
-          <div
-            className="h-2.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
-            style={{ width: `${progressValue}%` }}
-          />
+          <div className="h-2.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
+            style={{ width: `${progressValue}%` }} />
         </div>
 
-        {/* Kartu soal */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-
-          {/* Context text jika ada */}
           {currentQuestion.context_text && (
             <div className="px-6 pt-6">
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm leading-relaxed text-slate-700">
@@ -229,64 +240,40 @@ function QuizContent() {
             </div>
           )}
 
-          {/* Pertanyaan */}
           <div className="px-6 py-6">
             <p className="text-slate-800 font-medium text-base leading-relaxed whitespace-pre-line">
               {currentQuestion.question_text}
             </p>
           </div>
 
-          {/* Pilihan jawaban */}
           <div className="px-6 pb-6 space-y-3">
             {options.map((opt) => (
-              <button
-                key={opt.key}
-                onClick={() => handleOptionClick(opt.key)}
-                disabled={isAnswered}
-                className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all duration-200 ${getOptionStyle(opt.key)} ${!isAnswered ? "cursor-pointer" : "cursor-default"}`}
-              >
+              <button key={opt.key} onClick={() => handleOptionClick(opt.key)} disabled={isAnswered}
+                className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all duration-200 ${getOptionStyle(opt.key)} ${!isAnswered ? "cursor-pointer" : "cursor-default"}`}>
                 <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all ${getKeyStyle(opt.key)}`}>
                   {opt.key}
                 </span>
                 <span className="text-sm font-medium">{opt.text}</span>
-                {isAnswered && opt.key === currentQuestion.correct_option && (
-                  <span className="ml-auto text-emerald-500 text-lg">✓</span>
-                )}
-                {isAnswered && opt.key === selectedOption && opt.key !== currentQuestion.correct_option && (
-                  <span className="ml-auto text-red-400 text-lg">✗</span>
-                )}
+                {isAnswered && opt.key === currentQuestion.correct_option && <span className="ml-auto text-emerald-500 text-lg">✓</span>}
+                {isAnswered && opt.key === selectedOption && opt.key !== currentQuestion.correct_option && <span className="ml-auto text-red-400 text-lg">✗</span>}
               </button>
             ))}
           </div>
 
-          {/* Footer aksi */}
           <div className="px-6 pb-6 space-y-4 border-t border-slate-100 pt-5">
             {!isAnswered ? (
-              <button
-                onClick={handleCheckAnswer}
-                disabled={!selectedOption}
+              <button onClick={handleCheckAnswer} disabled={!selectedOption}
                 className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all duration-200 ${
-                  selectedOption
-                    ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200"
-                    : "bg-slate-100 text-slate-400 cursor-not-allowed"
-                }`}
-              >
+                  selectedOption ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200" : "bg-slate-100 text-slate-400 cursor-not-allowed"
+                }`}>
                 Periksa Jawaban
               </button>
             ) : (
               <div className="space-y-4">
-                <div className={`p-4 rounded-xl border ${
-                  selectedOption === currentQuestion.correct_option
-                    ? "bg-emerald-50 border-emerald-200"
-                    : "bg-red-50 border-red-200"
-                }`}>
+                <div className={`p-4 rounded-xl border ${selectedOption === currentQuestion.correct_option ? "bg-emerald-50 border-emerald-200" : "bg-red-50 border-red-200"}`}>
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg">
-                      {selectedOption === currentQuestion.correct_option ? "✅" : "❌"}
-                    </span>
-                    <span className={`text-xs font-bold ${
-                      selectedOption === currentQuestion.correct_option ? "text-emerald-700" : "text-red-600"
-                    }`}>
+                    <span className="text-lg">{selectedOption === currentQuestion.correct_option ? "✅" : "❌"}</span>
+                    <span className={`text-xs font-bold ${selectedOption === currentQuestion.correct_option ? "text-emerald-700" : "text-red-600"}`}>
                       {selectedOption === currentQuestion.correct_option ? "Jawaban Benar!" : `Salah! Kunci: Opsi ${currentQuestion.correct_option}`}
                     </span>
                   </div>
@@ -294,10 +281,8 @@ function QuizContent() {
                     {currentQuestion.explanation || "Tidak ada penjelasan untuk soal ini."}
                   </p>
                 </div>
-                <button
-                  onClick={handleNext}
-                  className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition shadow-md shadow-indigo-200"
-                >
+                <button onClick={handleNext}
+                  className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition shadow-md shadow-indigo-200">
                   {currentIdx + 1 === questions.length ? "Lihat Hasil Akhir 🏆" : "Soal Berikutnya →"}
                 </button>
               </div>
