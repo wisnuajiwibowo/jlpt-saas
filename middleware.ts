@@ -6,13 +6,13 @@ import { type NextFetchEvent } from 'next/server'
 
 const ratelimit = new Ratelimit({
   redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(10, '10 s'), // Maks 10 request per 10 detik
+  limiter: Ratelimit.slidingWindow(10, '10 s'),
   analytics: true,
 })
 
 export async function middleware(request: NextRequest, event: NextFetchEvent) {
-  // 1. RATE LIMITING
-  const ip = request.ip ?? '127.0.0.1'
+  // 1. RATE LIMITING - menggunakan IP dari headers
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ?? '127.0.0.1'
   const { success, limit, reset, remaining } = await ratelimit.limit(ip)
   
   if (!success) {
@@ -60,13 +60,6 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
