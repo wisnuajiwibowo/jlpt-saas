@@ -77,7 +77,7 @@ Kembalikan HANYA JSON valid:
       cache_key: cacheKey,
     }),
     supabaseAdmin.from("users").update({
-      ai_tokens_used: profile.ai_tokens_used + tokensUsed,
+      ai_tokens_used: (profile?.ai_tokens_used || 0) + tokensUsed,
     }).eq("id", user.id),
   ])
 
