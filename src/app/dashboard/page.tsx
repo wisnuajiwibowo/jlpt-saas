@@ -100,7 +100,7 @@ export default async function DashboardPage() {
                 style={{ width: `${tokenPct}%` }} />
             </div>
             <div className="text-[10px] text-slate-400 text-right">
-              {(profile?.ai_tokens_used || 0).toLocaleString()} token terpakai
+              {((profile?.ai_tokens_quota || 20000) - (profile?.ai_tokens_used || 0)).toLocaleString()} token tersisa
             </div>
           </div>
         </div>
