@@ -1,4 +1,36 @@
+"use client"
+
+import { useState } from "react"
+
 export default function BillingPage() {
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
+
+  // Fungsi alur ketika tombol beli diklik
+  async function handleCheckout(amount: number, planTier: string) {
+    setLoadingPlan(planTier)
+    try {
+      // Memanggil loket API checkout yang sudah kita buat kemarin
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount, planTier }),
+      })
+      
+      const data = await res.json()
+      
+      if (res.ok && data.url) {
+        // Jika sukses mendapatkan link iPaymu, lempar pengguna langsung ke halaman pembayaran
+        window.location.href = data.url
+      } else {
+        alert(data.error || "Gagal memproses pembayaran iPaymu")
+      }
+    } catch {
+      alert("Terjadi kesalahan koneksi sistem pembayaran")
+    } finally {
+      setLoadingPlan(null)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-3xl mx-auto space-y-8">
@@ -6,7 +38,7 @@ export default function BillingPage() {
         {/* Header */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
           <h1 className="text-lg font-bold text-slate-800">💳 Opsi Keanggotaan & Berlangganan</h1>
-          <p className="text-slate-500 text-xs mt-1">Pilih paket yang sesuai dengan target belajar Anda. Bayar mudah via Stripe.</p>
+          <p className="text-slate-500 text-xs mt-1">Pilih paket yang sesuai dengan target belajar Anda. Bayar mudah via iPaymu (QRIS, Virtual Account, Retail).</p>
         </div>
 
         {/* Kartu Paket */}
@@ -32,8 +64,12 @@ export default function BillingPage() {
               ))}
             </div>
             <div className="px-6 pb-6">
-              <button className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-sm font-semibold transition">
-                Upgrade via Stripe
+              <button 
+                onClick={() => handleCheckout(49000, "PRO")}
+                disabled={loadingPlan !== null}
+                className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:bg-slate-300 text-white text-sm font-semibold transition"
+              >
+                {loadingPlan === "PRO" ? "Memproses..." : "Upgrade via iPaymu"}
               </button>
             </div>
           </div>
@@ -61,8 +97,12 @@ export default function BillingPage() {
               ))}
             </div>
             <div className="px-6 pb-6">
-              <button className="w-full py-3 rounded-xl bg-white text-indigo-700 text-sm font-bold hover:bg-indigo-50 transition">
-                Pilih Paket Elite ✨
+              <button 
+                onClick={() => handleCheckout(129000, "ELITE")}
+                disabled={loadingPlan !== null}
+                className="w-full py-3 rounded-xl bg-white disabled:bg-slate-100 text-indigo-700 text-sm font-bold hover:bg-indigo-50 transition"
+              >
+                {loadingPlan === "ELITE" ? "Memproses..." : "Pilih Paket Elite ✨"}
               </button>
             </div>
           </div>
@@ -70,7 +110,7 @@ export default function BillingPage() {
 
         {/* Info tambahan */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-center">
-          <p className="text-xs text-slate-500">🔒 Pembayaran aman via <strong>Stripe</strong>. Batalkan kapan saja. Tidak ada biaya tersembunyi.</p>
+          <p className="text-xs text-slate-500">🔒 Pembayaran aman via <strong>iPaymu</strong>. Mendukung QRIS, Bank Transfer (VA), dan Gerai Retail. Aktivasi token instan otomatis.</p>
         </div>
       </div>
     </div>
