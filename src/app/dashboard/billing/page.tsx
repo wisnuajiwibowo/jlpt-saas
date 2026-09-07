@@ -110,7 +110,12 @@ export default function BillingPage() {
 
         {/* Info tambahan */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-center">
-          <p className="text-xs text-slate-500">🔒 Pembayaran aman via <strong>iPaymu</strong>. Mendukung QRIS, Bank Transfer (VA), dan Gerai Retail. Aktivasi token instan otomatis.</p>
+          <p className="text-xs text-slate-500">
+  🔒 Pembayaran aman via <strong>iPaymu</strong>. Mendukung QRIS, VA, Retail. Aktivasi instan. 
+  Dengan bertransaksi, Anda menyetujui <a href="/dashboard/terms" className="text-indigo-600 underline font-semibold ml-1">Syarat Layanan & Kebijakan Kebijakan Refund</a> kami.
+</p>
+
+  
         </div>
       </div>
     </div>
