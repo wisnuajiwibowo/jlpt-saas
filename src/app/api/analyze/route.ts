@@ -83,3 +83,4 @@ Kembalikan HANYA JSON valid:
 
   return NextResponse.json(result)
 }
+}
