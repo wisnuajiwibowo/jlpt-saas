@@ -11,8 +11,8 @@ export async function POST(req: Request) {
     // Pastikan status pembayaran dari iPaymu adalah "berhasil"
     if (status === "berhasil" && referenceId) {
       // Kita pecah ID transaksi untuk mengetahui paket apa yang dia beli (PRO atau ELITE)
-      const parts = referenceId.split("-")
-      const planTier = parts[1] // Berisi teks "PRO" atau "ELITE"
+
+      const planTier = referenceId.split("-")[1] // Mengambil potongan kata kedua secara langsung (PRO atau ELITE)
 
       // Tentukan berapa kuota token tambahan yang didapat murid
       let tokenBonus = 500000 // Paket Pro default dapat 500rb token
