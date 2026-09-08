@@ -25,9 +25,10 @@ export async function POST(req: Request) {
     .eq("id", user.id)
     .single()
   
-  // Jika token terpakai ditambah perkiraan (misal minimal 1000 token) sudah melebihi kuota, langsung kunci aksesnya
-  if (!profile || (profile.ai_tokens_used + 1000) > profile.ai_tokens_quota) 
-  {
+  // Jika token terpakai ditambah perkiraan sudah melebihi kuota, langsung kunci aksesnya
+  if (!profile || (profile.ai_tokens_used + 1000) > profile.ai_tokens_quota) {
+    return NextResponse.json({ error: "Token quota habis" }, { status: 403 })
+  }
 
   const cacheKey = `jlpt:v1:${createHash("sha256").update(text + targetLevel).digest("hex")}`
   const cached = await redis.get(cacheKey)
@@ -82,5 +83,4 @@ Kembalikan HANYA JSON valid:
   ])
 
   return NextResponse.json(result)
-}
 }
