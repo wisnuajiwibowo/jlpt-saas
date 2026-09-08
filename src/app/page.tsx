@@ -171,6 +171,12 @@ export default function LandingPage() {
       {/* FOOTER */}
       <footer className="border-t border-slate-100 bg-white py-8 text-center text-xs text-slate-400">
         <p>© 2026 DaijiNihongo. Platform Belajar Bahasa Jepang Terpercaya untuk Pelajar Indonesia.</p>
+        <div className="mt-4 flex justify-center gap-4 text-[11px] text-slate-400">
+          <a href="/dashboard/terms" className="hover:text-white underline">Syarat & Ketentuan</a>
+          <a href="/dashboard/terms" className="hover:text-white underline">Kebijakan Refund</a>
+          <a href="/dashboard/terms" className="hover:text-white underline">FAQ & Kontak</a>
+        </div>
+
       </footer>
     </div>
   )
