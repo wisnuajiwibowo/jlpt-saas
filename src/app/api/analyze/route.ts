@@ -36,27 +36,26 @@ export async function POST(req: Request) {
   const response = await claude.messages.create({
     model: "claude-3-5-sonnet-20241022",
     max_tokens: 1500,
-    system: `Kamu adalah ahli kompetensi bahasa Jepang profesional. Tugasmu adalah menganalisis materi input teks secara mendalam untuk persiapan ujian kelulusan resmi. Lakukan pembedahan komprehensif pada struktur tata bahasa, partikel, nuansa penggunaan kalimat, dan kosakata esensial. Buat juga analisis mengenai pola distraktor atau jebakan umum yang sering mengecoh siswa pada tipe teks seperti ini di ujian asli.
-
-Kembalikan HANYA JSON valid dengan struktur persis seperti ini:
-{
-  "jlpt_level": "N3",
-  "cefr_level": "B1",
-  "difficulty_score": 65,
-  "grammar_points": [{"pattern": "〜ている", "level": "N4", "explanation": "Penjelasan detail mengenai fungsi, makna, dan nuansa penggunaannya secara mendalam"}],
-  "vocabulary": [{"word": "言葉", "reading": "ことば", "meaning": "kata", "level": "N4"}],
-  "trap_patterns": ["Analisis pola distraktor atau jebakan umum yang sering mengecoh siswa di ujian asli"],
-  "adapted_text": "Teks orisinal buatanmu sendiri yang disesuaikan agar pas dengan targetLevel pengguna."
-}`,
-    messages: [{ role: "user", content: `Level target: ${targetLevel}\nTeks: ${text}` }],
+    system: "Kamu adalah ahli kompetensi bahasa Jepang profesional. Tugasmu adalah menganalisis materi input teks secara mendalam untuk persiapan ujian kelulusan resmi. Lakukan pembedahan komprehensif pada struktur tata bahasa, partikel, nuansa penggunaan kalimat, dan kosakata esensial. Buat juga analisis mengenai pola distraktor atau jebakan umum yang sering mengecoh siswa pada tipe teks seperti ini di ujian asli.\n\nKembalikan HANYA JSON valid dengan struktur persis seperti ini:\n{\n  \"jlpt_level\": \"N3\",\n  \"cefr_level\": \"B1\",\n  \"difficulty_score\": 65,\n  \"grammar_points\": [{\"pattern\": \"〜ている\", \"level\": \"N4\", \"explanation\": \"Penjelasan detail mengenai fungsi, makna, dan nuansa penggunaannya secara mendalam\"}],\n  \"vocabulary\": [{\"word\": \"言葉\", \"reading\": \"ことば\", \"meaning\": \"kata\", \"level\": \"N4\"}],\n  \"trap_patterns\": [\"Analisis pola distraktor atau jebakan umum yang sering mengecoh siswa di ujian asli\"],\n  \"adapted_text\": \"Teks orisinal buatanmu sendiri yang disesuaikan agar pas dengan targetLevel pengguna.\"\n}",
+    messages: [
+      { 
+        role: "user", 
+        content: [
+          {
+            type: "text",
+            text: `Level target: ${targetLevel}\nTeks: ${text}`
+          }
+        ]
+      }
+    ],
   })
 
   const tokensUsed = response.usage.input_tokens + response.usage.output_tokens
   
-  // Format pembacaan data teks yang benar dan aman dari respon Anthropic SDK
-  const firstBlock = (response.content as any)[0]
+  // Format pembacaan data blok teks yang aman dan sesuai standar Anthropic SDK terbaru
+  const firstBlock = response.content[0]
   const rawText = firstBlock && firstBlock.type === "text" ? firstBlock.text : "{}"
-
+  
   let result
   try {
     result = JSON.parse(rawText.replace(/```json|```/g, "").trim())
