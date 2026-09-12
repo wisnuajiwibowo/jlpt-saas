@@ -40,25 +40,21 @@ export async function POST(req: Request) {
     messages: [
       { 
         role: "user", 
-        content: [
-          {
-            type: "text",
-            text: `Level target: ${targetLevel}\nTeks: ${text}`
-          }
-        ]
+        content: `Level target: ${targetLevel}\nTeks: ${text}`
       }
     ],
   })
 
   const tokensUsed = response.usage.input_tokens + response.usage.output_tokens
   
-  // Format pembacaan data blok teks yang aman dan sesuai standar Anthropic SDK terbaru
+  // Membaca isi teks respons secara aman sesuai spesifikasi objek terbaru Anthropic Messages API
   const firstBlock = response.content[0]
   const rawText = firstBlock && firstBlock.type === "text" ? firstBlock.text : "{}"
   
   let result
   try {
-    result = JSON.parse(rawText.replace(/```json|```/g, "").trim())
+    const cleanJsonText = rawText.replace(/```json/g, "").replace(/```/g, "").trim()
+    result = JSON.parse(cleanJsonText)
   } catch {
     return NextResponse.json({ error: "AI gagal memproses format teks" }, { status: 500 })
   }
