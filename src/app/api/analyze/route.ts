@@ -7,7 +7,10 @@ import { NextResponse } from "next/server"
 
 export const dynamic = "force-dynamic"
 
-const claude = new Anthropic()
+// Mengunci inisialisasi API Key Anthropic secara bersih
+const claude = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+})
 
 export async function POST(req: Request) {
   const supabase = await createClient()
@@ -33,6 +36,7 @@ export async function POST(req: Request) {
   const cached = await redis.get(cacheKey)
   if (cached) return NextResponse.json(cached)
 
+  // PROSES UTAMA: Mengunci pengiriman parameter model agar tidak terlempar ke kata 'default'
   const response = await claude.messages.create({
     model: "claude-3-5-sonnet-20241022",
     max_tokens: 1500,
@@ -47,8 +51,8 @@ export async function POST(req: Request) {
 
   const tokensUsed = response.usage.input_tokens + response.usage.output_tokens
   
-  // SOLUSI AMAN: Menggunakan ekstensi parameter as any agar Vercel membaca properti teks Anthropic Messages API secara mutlak
-  const firstBlock = (response.content as any)[0]
+  // Menerjemahkan blok teks kiriman dari Anthropic SDK secara aman dan terproteksi
+  const firstBlock = response.content[0]
   const rawText = firstBlock && firstBlock.type === "text" ? firstBlock.text : "{}"
   
   let result
