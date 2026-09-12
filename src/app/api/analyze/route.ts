@@ -25,7 +25,6 @@ export async function POST(req: Request) {
     .eq("id", user.id)
     .single()
   
-  // Jika token terpakai ditambah perkiraan sudah melebihi kuota, langsung kunci aksesnya
   if (!profile || (profile.ai_tokens_used + 1000) > profile.ai_tokens_quota) {
     return NextResponse.json({ error: "Token quota habis" }, { status: 403 })
   }
@@ -37,32 +36,32 @@ export async function POST(req: Request) {
   const response = await claude.messages.create({
     model: "claude-3-5-sonnet-20241022",
     max_tokens: 1500,
-    system: `Kamu adalah ahli linguistik Jepang profesional. Tugasmu adalah menganalisis teks input dan mengadopsi METODOLOGI BELAJAR BELAJAR SHIN KANZEN MASTER secara ketat namun aman dari HAK CIPTA.
-Dilarang menyalin kalimat contoh dari buku fisik manapun. Gunakan keahlianmu untuk memodifikasi total teks dan membuat struktur buatan sendiri yang orisinal.
+    system: `Kamu adalah ahli kompetensi bahasa Jepang profesional. Tugasmu adalah menganalisis materi input teks secara mendalam untuk persiapan ujian kelulusan resmi. Lakukan pembedahan komprehensif pada struktur tata bahasa, partikel, nuansa penggunaan kalimat, dan kosakata esensial. Buat juga analisis mengenai pola distraktor atau jebakan umum yang sering mengecoh siswa pada tipe teks seperti ini di ujian asli.
 
-Kembalikan HANYA JSON valid:
+Kembalikan HANYA JSON valid dengan struktur persis seperti ini:
 {
   "jlpt_level": "N3",
   "cefr_level": "B1",
   "difficulty_score": 65,
-  "grammar_points": [{"pattern": "〜ている", "level": "N4", "explanation": "Penjelasan detail menggunakan gaya analisa Shin Kanzen Master yang berfokus pada perbedaan nuansa penggunaan"}],
+  "grammar_points": [{"pattern": "〜ている", "level": "N4", "explanation": "Penjelasan detail mengenai fungsi, makna, dan nuansa penggunaannya secara mendalam"}],
   "vocabulary": [{"word": "言葉", "reading": "ことば", "meaning": "kata", "level": "N4"}],
-  "trap_patterns": ["Analisis jebakan distraktor umum yang biasa mengecoh siswa pada teks tipe ini di ujian asli JLPT"],
-  "adapted_text": "Teks orisinal modifikasi buatanmu yang disesuaikan agar pas dengan targetLevel pengguna tanpa melanggar hak cipta buku manapun."
+  "trap_patterns": ["Analisis pola distraktor atau jebakan umum yang sering mengecoh siswa di ujian asli"],
+  "adapted_text": "Teks orisinal buatanmu sendiri yang disesuaikan agar pas dengan targetLevel pengguna."
 }`,
     messages: [{ role: "user", content: `Level target: ${targetLevel}\nTeks: ${text}` }],
   })
 
   const tokensUsed = response.usage.input_tokens + response.usage.output_tokens
   
-  // Format pengaman universal untuk mengambil teks jawaban dari Claude AI
-  const rawText = 'text' in response.content[0] ? (response.content[0] as any).text : "{}"
-
+  // Membaca isi respons teks secara aman dari Claude API
+  const firstBlock = response.content[0]
+  const rawText = firstBlock && firstBlock.type === "text" ? firstBlock.text : "{}"
+  
   let result
   try {
     result = JSON.parse(rawText.replace(/```json|```/g, "").trim())
   } catch {
-    return NextResponse.json({ error: "AI gagal memproses teks" }, { status: 500 })
+    return NextResponse.json({ error: "AI gagal memproses format teks" }, { status: 500 })
   }
 
   await Promise.all([
