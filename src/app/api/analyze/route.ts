@@ -55,10 +55,9 @@ Kembalikan HANYA JSON valid:
 
   const tokensUsed = response.usage.input_tokens + response.usage.output_tokens
   
-  // SANGAT PENTING: Menggunakan metode as any agar TypeScript Vercel langsung meloloskan kompilasi objek array Anthropic
-  const firstBlock = (response.content as any)[0]
-  const rawText = firstBlock && firstBlock.type === "text" ? firstBlock.text : "{}"
-  
+  // Format pengaman universal untuk mengambil teks jawaban dari Claude AI
+  const rawText = 'text' in response.content[0] ? (response.content[0] as any).text : "{}"
+
   let result
   try {
     result = JSON.parse(rawText.replace(/```json|```/g, "").trim())
