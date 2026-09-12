@@ -29,16 +29,18 @@ export async function POST(req: Request) {
 
   const body = await req.json()
   const { jlpt_level, module_type, score, total_questions } = body
-  const accuracy = Math.round((score / total_questions) * 100 * 100) / 100
+  
+  // Menghitung akurasi nilai dengan aman
+  const accuracy = Math.round((score / (total_questions || 10)) * 100 * 100) / 100
 
-  // Simpan hasil kuis
+  // Simpan hasil kuis ke dalam tabel quiz_results
   const { error: quizError } = await supabaseAdmin
     .from("quiz_results")
     .insert({ user_id: user.id, jlpt_level, module_type, score, total_questions, accuracy })
 
   if (quizError) return NextResponse.json({ error: quizError.message }, { status: 500 })
 
-  // Update streak
+  // Update streak belajar harian siswa
   const today = new Date().toISOString().split("T")[0]
   const { data: streak } = await supabaseAdmin
     .from("user_streaks")
@@ -52,21 +54,23 @@ export async function POST(req: Request) {
       last_activity_date: today, total_sessions: 1
     })
   } else {
-    const last = new Date(streak.last_activity_date)
+    // Memberikan tanda pengaman string agar TypeScript Vercel lolos kompilasi secara mutlak
+    const lastDateString = streak.last_activity_date || today
+    const last = new Date(lastDateString)
     const todayDate = new Date(today)
     const diffDays = Math.floor((todayDate.getTime() - last.getTime()) / (1000 * 60 * 60 * 24))
 
-    let newStreak = streak.current_streak
+    let newStreak = streak.current_streak || 0
     if (diffDays === 1) newStreak += 1
     else if (diffDays > 1) newStreak = 1
 
     await supabaseAdmin.from("user_streaks").update({
       current_streak: newStreak,
-      longest_streak: Math.max(newStreak, streak.longest_streak),
+      longest_streak: Math.max(newStreak, streak.longest_streak || 0),
       last_activity_date: today,
-      total_sessions: streak.total_sessions + 1,
+      total_sessions: (streak.total_sessions || 0) + 1,
       updated_at: new Date().toISOString()
-    }).eq("user_id", user.id)
+    }).eq("id", user.id)
   }
 
   return NextResponse.json({ success: true })
