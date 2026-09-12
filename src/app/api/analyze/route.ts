@@ -53,10 +53,10 @@ Kembalikan HANYA JSON valid dengan struktur persis seperti ini:
 
   const tokensUsed = response.usage.input_tokens + response.usage.output_tokens
   
-  // Membaca isi respons teks secara aman dari Claude API
-  const firstBlock = response.content[0]
+  // Format pembacaan data teks yang benar dan aman dari respon Anthropic SDK
+  const firstBlock = (response.content as any)[0]
   const rawText = firstBlock && firstBlock.type === "text" ? firstBlock.text : "{}"
-  
+
   let result
   try {
     result = JSON.parse(rawText.replace(/```json|```/g, "").trim())
