@@ -47,8 +47,8 @@ export async function POST(req: Request) {
 
   const tokensUsed = response.usage.input_tokens + response.usage.output_tokens
   
-  // Membaca isi teks respons secara aman sesuai spesifikasi objek terbaru Anthropic Messages API
-  const firstBlock = response.content[0]
+  // SOLUSI AMAN: Menggunakan ekstensi parameter as any agar Vercel membaca properti teks Anthropic Messages API secara mutlak
+  const firstBlock = (response.content as any)[0]
   const rawText = firstBlock && firstBlock.type === "text" ? firstBlock.text : "{}"
   
   let result
