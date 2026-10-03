@@ -2,42 +2,34 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  /* PERBAIKAN UTAMA: Mematikan total Turbopack khusus untuk sesi kompilasi Vercel */
+  experimental: {
+    // Memaksa penonaktifan Turbopack agar Sentry Plugin dan Manifest NFT Webpack sinkron sempurna
+    turbo: false as any, 
+  },
 };
 
 export default withSentryConfig(nextConfig, {
-  // For all available options, see:
-  // https://www.npmjs.com/package/@sentry/webpack-plugin#options
-
+  // Lokasi organisasi dan nama proyek Anda di dashboard Sentry
   org: "jlpt-saas",
-
   project: "javascript-nextjs",
 
-  // Only print logs for uploading source maps in CI
+  // Menyembunyikan log upload source maps kecuali di server integrasi (CI)
   silent: !process.env.CI,
 
-  // For all available options, see:
-  // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
-
-  // Upload a larger set of source maps for prettier stack traces (increases build time)
+  // Mengunggah source maps lengkap agar stack trace error di Sentry terbaca rapi
   widenClientFileUpload: true,
 
-  // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
-  // This can increase your server load as well as your hosting bill.
-  // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
-  // side errors will fail.
+  // Mengalihkan request browser Sentry ke route lokal agar tidak diblokir ad-blocker iklan
   tunnelRoute: "/monitoring",
 
   webpack: {
-    // Enables automatic instrumentation of Vercel Cron Monitors. (Does not yet work with App Router route handlers.)
-    // See the following for more information:
-    // https://docs.sentry.io/product/crons/
-    // https://vercel.com/docs/cron-jobs
+    // Instrumentasi otomatis untuk memantau Vercel Cron Jobs jika ada
     automaticVercelMonitors: true,
 
-    // Tree-shaking options for reducing bundle size
+    // Fitur optimasi ukuran file bundel (Tree-shaking)
     treeshake: {
-      // Automatically tree-shake Sentry logger statements to reduce bundle size
+      // Menghapus log debugging Sentry yang tidak perlu di lingkungan produksi
       removeDebugLogging: true,
     },
   }
