@@ -27,16 +27,15 @@ function LearnContent() {
   const [selectedAns, setSelectedAns] = useState<{ [key: string]: string }>({})
   const [checked, setChecked] = useState<{ [key: string]: boolean }>({})
   
-  // STATE BARU: Menyimpan status paket langganan pengguna (FREE, PRO, atau ELITE)
+  // Status paket langganan pengguna (FREE, PRO, atau ELITE)
   const [currentPlan, setCurrentPlan] = useState<string>("FREE")
 
-  // Mengambil data modul belajar dan status langganan sekaligus
   useEffect(() => {
     async function loadMateriDanProfil() {
       try {
         const [resMateri, resProfil] = await Promise.all([
           fetch(`/api/study?level=${level}&type=${type}`),
-          fetch("/api/progress") // Menembak endpoint progres terpadu untuk membaca profil
+          fetch("/api/progress") 
         ])
         
         if (resMateri.ok) {
@@ -46,7 +45,6 @@ function LearnContent() {
         
         if (resProfil.ok) {
           const dataProfil = await resProfil.json()
-          // Asumsi database mengembalikan field plan_tier (FREE/PRO/ELITE)
           setCurrentPlan(dataProfil.plan_tier || "FREE")
         }
       } catch (err) {
@@ -77,8 +75,6 @@ function LearnContent() {
     </div>
   )
 
-  // LOGIKA PEMBATAS HAK AKSES (PAYWALL): 
-  // Materi N5 dan N4 digratiskan. Materi N3, N2, N1 dikunci jika user masih berstatus "FREE"
   const isLocked = currentPlan === "FREE" && ["N3", "N2", "N1"].includes(level)
 
   return (
