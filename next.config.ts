@@ -2,7 +2,10 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Konfigurasi standar Next.js 16 Anda
+  // Matikan fitur eksperimental turbo secara mutlak di level config
+  experimental: {
+    turbo: false as any,
+  },
 };
 
 export default withSentryConfig(nextConfig, {
@@ -12,10 +15,10 @@ export default withSentryConfig(nextConfig, {
   widenClientFileUpload: true,
   tunnelRoute: "/monitoring",
 
-  /* PERBAIKAN UTAMA: Mematikan pembuatan otomatis file pelacak NFT oleh Sentry Plugin */
-  // Ini akan menghentikan pencarian berkas hantu middleware.js.nft.json secara permanen di Vercel
+  // PERBAIKAN MUTLAK: Paksa Sentry untuk tidak menyentuh atau membuat file pelacak (*trace*) pada fungsi middleware
   excludeServerRoutes: [
     /middleware/,
+    /security/,
     /sentry-tunnel/
   ],
 });
