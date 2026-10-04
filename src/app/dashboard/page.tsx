@@ -17,7 +17,12 @@ export default async function DashboardPage() {
     .eq("id", user.id)
     .single()
 
-  const tokenPct = Math.round(((profile?.ai_tokens_used || 0) / (profile?.ai_tokens_quota || 20000)) * 100)
+  // PERBAIKAN: Mengamankan rumus dari ancaman Division by Zero (Infinity%) jika quota user adalah 0
+  const quota = profile?.ai_tokens_quota ?? 20000
+  const used = profile?.ai_tokens_used || 0
+  const tokenPct = quota > 0 ? Math.min(Math.round((used / quota) * 100), 100) : 100
+
+  // TIPS SAAS: Ambil langganan yang berstatus aktif (misal ditambahkan filter status jika ada di database)
   const currentPlan = profile?.subscriptions?.[0]?.plan_tier || "FREE"
 
   const jlptLevels = ["N5", "N4", "N3", "N2", "N1"]
@@ -51,7 +56,7 @@ export default async function DashboardPage() {
           <nav className="space-y-1">
             {navItems.map((item) => (
               <Link key={item.href} href={item.href} className="block">
-                <Button variant="ghost" className="w-full justify-start text-sm text-slate-600 hover:bg-slate-50 hover:text-indigo-700">
+                <Button variant="ghost" className="w-full justify-start text-sm text-slate-600 hover:bg-slate-50 hover:text-indigo-700 cursor-pointer transition-colors">
                   <span className="mr-3 text-base">{item.icon}</span> {item.label}
                 </Button>
               </Link>
@@ -61,7 +66,7 @@ export default async function DashboardPage() {
 
         <div className="border-t border-slate-100 pt-4">
           <div className="flex items-center gap-3 px-2">
-            <div className="w-9 h-9 rounded-full bg-[#eeeffc] flex items-center justify-center font-bold text-[#4f46e5] text-sm">
+            <div className="w-9 h-9 rounded-full bg-[#eeeffc] flex items-center justify-center font-bold text-[#4f46e5] text-sm select-none">
               {profile?.full_name?.substring(0, 2).toUpperCase() || "AJ"}
             </div>
             <div className="flex flex-col min-w-0">
@@ -90,17 +95,17 @@ export default async function DashboardPage() {
           </div>
 
           {/* Token AI */}
-          <div className="w-full md:w-52 bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-2">
+          <div className="w-full md:w-52 bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-2 select-none">
             <div className="flex justify-between text-[11px] font-medium text-slate-500">
-              <span>Kuota AI Token</span>
+              <span>Kuota AI Token Terpakai</span>
               <span className="font-bold text-indigo-600">{tokenPct}%</span>
             </div>
             <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-              <div className="h-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all"
+              <div className="h-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
                 style={{ width: `${tokenPct}%` }} />
             </div>
             <div className="text-[10px] text-slate-400 text-right">
-              {((profile?.ai_tokens_quota || 20000) - (profile?.ai_tokens_used || 0)).toLocaleString()} token tersisa
+              {(Math.max(quota - used, 0)).toLocaleString()} token tersisa
             </div>
           </div>
         </div>
@@ -115,14 +120,14 @@ export default async function DashboardPage() {
           <div className="space-y-5">
             {jlptLevels.map((level) => (
               <div key={level} className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm space-y-4">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 select-none">
                   <span className="text-xs font-bold bg-indigo-600 text-white px-3 py-1 rounded-lg">{level}</span>
                   <h3 className="text-sm font-bold text-slate-800">Paket Materi Kompetensi JLPT {level}</h3>
                 </div>
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                   {modules.map((mod) => (
                     <Link key={mod.id} href={`/dashboard/quiz?level=${level}&type=${mod.id}`}>
-                      <div className="group border border-slate-100 hover:border-indigo-300 hover:shadow-sm rounded-xl p-4 transition-all cursor-pointer bg-white">
+                      <div className="group border border-slate-100 hover:border-indigo-300 hover:shadow-md rounded-xl p-4 transition-all cursor-pointer bg-white active:scale-[0.99]">
                         <div className="text-xl mb-2 group-hover:scale-110 transition-transform">{mod.icon}</div>
                         <p className="text-xs font-bold text-slate-800">{mod.name}</p>
                         <p className="text-[10px] text-slate-400 mt-0.5">{mod.desc}</p>
