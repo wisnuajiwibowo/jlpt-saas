@@ -2,10 +2,7 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Matikan fitur eksperimental turbo secara mutlak di level config
-  experimental: {
-    turbo: false as any,
-  },
+  // Pengaturan standar Next.js 16 Anda
 };
 
 export default withSentryConfig(nextConfig, {
@@ -15,7 +12,11 @@ export default withSentryConfig(nextConfig, {
   widenClientFileUpload: true,
   tunnelRoute: "/monitoring",
 
-  // PERBAIKAN MUTLAK: Paksa Sentry untuk tidak menyentuh atau membuat file pelacak (*trace*) pada fungsi middleware
+  /* SOLUSI PAMUNGKAS: Mematikan instrumentasi otomatis Sentry pada Middleware & Server */
+  // Ini akan menghentikan Sentry memodifikasi bundle server yang memicu error hantu nft.json
+  autoInstrumentMiddleware: false,
+  autoInstrumentServerFunctions: false, 
+  
   excludeServerRoutes: [
     /middleware/,
     /security/,
