@@ -295,8 +295,9 @@ function QuizDokkaiContent() {
               {options.map((opt) => (
                 <button key={opt.key} onClick={() => handleOptionClick(opt.key)} disabled={isAnswered}
                   className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all duration-200 ${getOptionStyle(opt.key)} ${!isAnswered ? "cursor-pointer" : "cursor-default"}`}>
+                  {/* PERBAIKAN DI BARIS INI: Menambahkan penutup } pada opt.key */}
                   <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all ${getKeyStyle(opt.key)}`}>
-                    {opt.key
+                    {opt.key}
                   </span>
                   <span className="text-xs font-medium leading-normal">{opt.text}</span>
                   {isAnswered && opt.key === currentQuestion.correct_option && <span className="ml-auto text-emerald-500 text-lg select-none">✓</span>}
@@ -304,6 +305,7 @@ function QuizDokkaiContent() {
                 </button>
               ))}
             </div>
+
 
             {/* Blok Aksi Evaluasi / Pembahasan */}
             <div className="border-t border-slate-100 pt-5">
