@@ -21,7 +21,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Parameter level wajib diisi" }, { status: 400 })
     }
 
-    // 3. Eksekusi fungsi RPC pintarget_random_dokkai_quiz yang baru kita buat di Supabase
+    // 3. Eksekusi fungsi RPC get_random_dokkai_quiz yang baru kita buat di Supabase
     // Mengambil 2 teks wacana bacaan acak, lengkap dengan seluruh pertanyaan di dalamnya
     const { data: quizData, error } = await supabase
       .rpc("get_random_dokkai_quiz", {
@@ -33,7 +33,6 @@ export async function GET(req: Request) {
     if (!quizData || quizData.length === 0) {
       return NextResponse.json({ error: "Belum ada materi soal Dokkai untuk kategori ini" }, { status: 404 })
     }
-
     // 4. TRANSFORMAST DATA: Mengelompokkan hasil flat join database menjadi struktur pohon (Tree Object)
     // Supaya di frontend Next.js lebih mudah dirender (Satu bacaan membungkus array pertanyaan)
     const formattedPassages: any[] = []
