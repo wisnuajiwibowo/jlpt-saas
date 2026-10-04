@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, useRef, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 
 interface Question {
@@ -31,7 +31,11 @@ function QuizContent() {
   const [error, setError] = useState<string | null>(null)
   const [isFinished, setIsFinished] = useState(false)
   const [saving, setSaving] = useState(false)
+  
+  // ANTI-DUPLIKASI: Mengunci agar request POST hasil kuis hanya dikirim satu kali saja
+  const hasSaved = useRef(false)
 
+  // Mengambil bank soal acak berdasarkan level dan kategori
   useEffect(() => {
     async function fetchQuestions() {
       try {
@@ -48,9 +52,10 @@ function QuizContent() {
     fetchQuestions()
   }, [level, type])
 
-  // Auto simpan hasil kuis ke database
+  // Otomatis simpan hasil akhir kuis ke database Supabase
   useEffect(() => {
-    if (isFinished && questions.length > 0) {
+    if (isFinished && questions.length > 0 && !hasSaved.current) {
+      hasSaved.current = true // Kunci status agar tidak mengirim data ganda
       setSaving(true)
       fetch("/api/quiz-results", {
         method: "POST",
@@ -63,7 +68,7 @@ function QuizContent() {
         })
       }).finally(() => setSaving(false))
     }
-  }, [isFinished])
+  }, [isFinished, questions.length, level, type, score])
 
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4">
@@ -77,7 +82,7 @@ function QuizContent() {
       <div className="text-center p-8 bg-red-50 rounded-2xl border border-red-200">
         <p className="text-4xl mb-3">⚠️</p>
         <p className="text-red-500 font-medium text-sm">{error}</p>
-        <button onClick={() => router.push("/dashboard")} className="mt-4 px-5 py-2 bg-slate-800 text-white text-sm rounded-xl hover:bg-slate-700 transition">
+        <button onClick={() => router.push("/dashboard")} className="mt-4 px-5 py-2 bg-slate-800 text-white text-sm rounded-xl hover:bg-slate-700 transition cursor-pointer">
           Kembali ke Dashboard
         </button>
       </div>
@@ -89,14 +94,14 @@ function QuizContent() {
       <div className="text-center p-8 bg-slate-50 rounded-2xl border max-w-sm">
         <p className="text-4xl mb-3">📭</p>
         <p className="text-slate-600 font-medium">Belum ada soal untuk kategori ini.</p>
-        <button onClick={() => router.push("/dashboard")} className="mt-4 px-5 py-2 bg-indigo-600 text-white text-sm rounded-xl hover:bg-indigo-700 transition">
+        <button onClick={() => router.push("/dashboard")} className="mt-4 px-5 py-2 bg-indigo-600 text-white text-sm rounded-xl hover:bg-indigo-700 transition cursor-pointer">
           Kembali ke Dashboard
         </button>
       </div>
     </div>
   )
 
-  // HALAMAN SKOR AKHIR
+  // HALAMAN RINGKASAN SKOR AKHIR
   if (isFinished) {
     const pct = Math.round((score / questions.length) * 100)
     const emoji = pct >= 80 ? "🏆" : pct >= 60 ? "👍" : "💪"
@@ -104,7 +109,7 @@ function QuizContent() {
     const color = pct >= 80 ? "text-emerald-600" : pct >= 60 ? "text-indigo-600" : "text-orange-500"
 
     return (
-      <div className="min-h-screen flex items-center justify-center p-6">
+      <div className="min-h-screen flex items-center justify-center p-6 bg-[#fafafa]">
         <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
           <div className="bg-gradient-to-br from-indigo-600 to-purple-600 p-8 text-center text-white">
             <div className="text-6xl mb-3">{emoji}</div>
@@ -141,16 +146,16 @@ function QuizContent() {
 
             <div className="grid grid-cols-2 gap-3">
               <button onClick={() => router.push("/dashboard/progress")}
-                className="py-3 rounded-xl border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 transition">
+                className="py-3 rounded-xl border border-slate-200 text-slate-700 text-sm font-medium hover:bg-slate-50 transition cursor-pointer">
                 Lihat Progres
               </button>
               <button onClick={() => window.location.reload()}
-                className="py-3 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition">
+                className="py-3 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition cursor-pointer">
                 Coba Lagi 🔄
               </button>
             </div>
             <button onClick={() => router.push("/dashboard")}
-              className="w-full py-2.5 rounded-xl text-slate-500 text-xs hover:text-slate-700 transition">
+              className="w-full py-2.5 rounded-xl text-slate-500 text-xs hover:text-slate-700 transition cursor-pointer">
               ← Kembali ke Dashboard
             </button>
           </div>
@@ -158,7 +163,6 @@ function QuizContent() {
       </div>
     )
   }
-
   const currentQuestion = questions[currentIdx]
   const options = [
     { key: "A", text: currentQuestion.option_a },
@@ -184,6 +188,12 @@ function QuizContent() {
   function handleNext() {
     setIsAnswered(false)
     setSelectedOption(null)
+    
+    // PERBAIKAN: Mengembalikan posisi gulir layar ke paling atas secara halus saat nomor soal berganti
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }
+
     if (currentIdx + 1 < questions.length) {
       setCurrentIdx((prev) => prev + 1)
     } else {
@@ -212,40 +222,45 @@ function QuizContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-start justify-center p-6 pt-10">
+    <div className="min-h-screen bg-slate-50 flex items-start justify-center p-6 pt-10 font-sans">
       <div className="w-full max-w-2xl space-y-5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 select-none">
             <span className="bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full">{level}</span>
             <span className="bg-slate-200 text-slate-700 text-xs font-medium px-3 py-1 rounded-full">{type.toUpperCase()}</span>
           </div>
-          <div className="text-right">
+          <div className="text-right select-none">
             <div className="text-xs text-slate-500">Soal {currentIdx + 1} dari {questions.length}</div>
             <div className="text-xs font-semibold text-indigo-600">{score} Benar ✓</div>
           </div>
         </div>
 
-        <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
+        {/* Indikator Progress Garis Belajar */}
+        <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden select-none">
           <div className="h-2.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
             style={{ width: `${progressValue}%` }} />
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          {/* Teks Bacaan Dokkai Mandiri (Wacana Panjang) */}
           {currentQuestion.context_text && (
             <div className="px-6 pt-6">
-              <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm leading-relaxed text-slate-700">
-                <span className="text-xs font-bold text-amber-600 block mb-1">📄 Teks Bacaan:</span>
-                {currentQuestion.context_text}
+              <div className="p-4 bg-amber-50/60 border border-amber-200/70 rounded-xl text-sm leading-relaxed text-slate-700">
+                <span className="text-xs font-bold text-amber-600 block mb-1.5 select-none">📄 Teks Bacaan:</span>
+                {/* OPTIMASI: Menggunakan whitespace-pre-wrap agar pemisah alinea kalimat Jepang tegak rapi */}
+                <p className="whitespace-pre-wrap font-sans">{currentQuestion.context_text}</p>
               </div>
             </div>
           )}
 
+          {/* Materi Pertanyaan Pokok */}
           <div className="px-6 py-6">
-            <p className="text-slate-800 font-medium text-base leading-relaxed whitespace-pre-line">
+            <p className="text-slate-800 font-medium text-base leading-relaxed whitespace-pre-wrap">
               {currentQuestion.question_text}
             </p>
           </div>
 
+          {/* Daftar Komponen Pilihan Ganda (A, B, C, D) */}
           <div className="px-6 pb-6 space-y-3">
             {options.map((opt) => (
               <button key={opt.key} onClick={() => handleOptionClick(opt.key)} disabled={isAnswered}
@@ -254,16 +269,17 @@ function QuizContent() {
                   {opt.key}
                 </span>
                 <span className="text-sm font-medium">{opt.text}</span>
-                {isAnswered && opt.key === currentQuestion.correct_option && <span className="ml-auto text-emerald-500 text-lg">✓</span>}
-                {isAnswered && opt.key === selectedOption && opt.key !== currentQuestion.correct_option && <span className="ml-auto text-red-400 text-lg">✗</span>}
+                {isAnswered && opt.key === currentQuestion.correct_option && <span className="ml-auto text-emerald-500 text-lg select-none">✓</span>}
+                {isAnswered && opt.key === selectedOption && opt.key !== currentQuestion.correct_option && <span className="ml-auto text-red-400 text-lg select-none">✗</span>}
               </button>
             ))}
           </div>
 
+          {/* Lembar Evaluasi & Pembahasan Tata Bahasa */}
           <div className="px-6 pb-6 space-y-4 border-t border-slate-100 pt-5">
             {!isAnswered ? (
               <button onClick={handleCheckAnswer} disabled={!selectedOption}
-                className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all duration-200 ${
+                className={`w-full py-3.5 rounded-xl font-semibold text-sm transition-all duration-200 cursor-pointer ${
                   selectedOption ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200" : "bg-slate-100 text-slate-400 cursor-not-allowed"
                 }`}>
                 Periksa Jawaban
@@ -271,18 +287,18 @@ function QuizContent() {
             ) : (
               <div className="space-y-4">
                 <div className={`p-4 rounded-xl border ${selectedOption === currentQuestion.correct_option ? "bg-emerald-50 border-emerald-200" : "bg-red-50 border-red-200"}`}>
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-2 select-none">
                     <span className="text-lg">{selectedOption === currentQuestion.correct_option ? "✅" : "❌"}</span>
                     <span className={`text-xs font-bold ${selectedOption === currentQuestion.correct_option ? "text-emerald-700" : "text-red-600"}`}>
                       {selectedOption === currentQuestion.correct_option ? "Jawaban Benar!" : `Salah! Kunci: Opsi ${currentQuestion.correct_option}`}
                     </span>
                   </div>
-                  <p className="text-xs leading-relaxed text-slate-600 whitespace-pre-line">
+                  <p className="text-xs leading-relaxed text-slate-600 whitespace-pre-wrap">
                     {currentQuestion.explanation || "Tidak ada penjelasan untuk soal ini."}
                   </p>
                 </div>
                 <button onClick={handleNext}
-                  className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition shadow-md shadow-indigo-200">
+                  className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition shadow-md shadow-indigo-200 cursor-pointer">
                   {currentIdx + 1 === questions.length ? "Lihat Hasil Akhir 🏆" : "Soal Berikutnya →"}
                 </button>
               </div>
@@ -294,10 +310,11 @@ function QuizContent() {
   )
 }
 
+// EKSPOR UTAMA: Wajib dibungkus Suspense agar Next.js App Router tidak crash saat compile production build
 export default function QuizPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
       </div>
     }>
