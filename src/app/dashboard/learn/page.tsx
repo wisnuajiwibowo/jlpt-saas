@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
+import Link from "next/link"
 
 interface StudyItem {
   id: string
@@ -17,6 +18,7 @@ interface StudyItem {
 
 function LearnContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const level = searchParams.get("level") || "N3"
   const type = searchParams.get("type") || "grammar"
 
@@ -24,27 +26,42 @@ function LearnContent() {
   const [loading, setLoading] = useState(true)
   const [selectedAns, setSelectedAns] = useState<{ [key: string]: string }>({})
   const [checked, setChecked] = useState<{ [key: string]: boolean }>({})
+  
+  // STATE BARU: Menyimpan status paket langganan pengguna (FREE, PRO, atau ELITE)
+  const [currentPlan, setCurrentPlan] = useState<string>("FREE")
 
-  // Mengambil data modul belajar mandiri dari database
+  // Mengambil data modul belajar dan status langganan sekaligus
   useEffect(() => {
-    async function loadMateri() {
+    async function loadMateriDanProfil() {
       try {
-        const res = await fetch(`/api/study?level=${level}&type=${type}`)
-        const data = await res.json()
-        if (res.ok) setMateri(data)
+        const [resMateri, resProfil] = await Promise.all([
+          fetch(`/api/study?level=${level}&type=${type}`),
+          fetch("/api/progress") // Menembak endpoint progres terpadu untuk membaca profil
+        ])
+        
+        if (resMateri.ok) {
+          const dataMateri = await resMateri.json()
+          setMateri(dataMateri)
+        }
+        
+        if (resProfil.ok) {
+          const dataProfil = await resProfil.json()
+          // Asumsi database mengembalikan field plan_tier (FREE/PRO/ELITE)
+          setCurrentPlan(dataProfil.plan_tier || "FREE")
+        }
       } catch (err) {
-        console.error("Gagal memuat modul belajar:", err)
+        console.error("Gagal sinkronisasi data proteksi materi:", err)
       } finally {
         setLoading(false)
       }
     }
-    loadMateri()
+    loadMateriDanProfil()
   }, [level, type])
 
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-slate-50">
       <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-      <p className="text-slate-400 text-sm animate-pulse">Memuat modul belajar JLPT...</p>
+      <p className="text-slate-400 text-sm animate-pulse">Memuat hak akses modul belajar...</p>
     </div>
   )
 
@@ -60,6 +77,10 @@ function LearnContent() {
     </div>
   )
 
+  // LOGIKA PEMBATAS HAK AKSES (PAYWALL): 
+  // Materi N5 dan N4 digratiskan. Materi N3, N2, N1 dikunci jika user masih berstatus "FREE"
+  const isLocked = currentPlan === "FREE" && ["N3", "N2", "N1"].includes(level)
+
   return (
     <div className="min-h-screen bg-slate-50 p-6 font-sans">
       <div className="max-w-3xl mx-auto space-y-6">
@@ -70,6 +91,11 @@ function LearnContent() {
             <div className="flex gap-2">
               <span className="bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full">{level}</span>
               <span className="bg-slate-100 text-slate-700 text-xs font-medium px-3 py-1 rounded-full">{type.toUpperCase()}</span>
+              {isLocked && (
+                <span className="bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 animate-pulse">
+                  🔒 Premium Only
+                </span>
+              )}
             </div>
           </div>
           <h1 className="text-lg font-bold text-slate-800 mt-3">📖 Ruang Belajar Mandiri</h1>
@@ -77,35 +103,39 @@ function LearnContent() {
             Pelajari konsep pola kalimat secara bertahap, lalu uji pemahaman kilatmu via Flash Quiz di setiap akhir modul.
           </p>
         </div>
-
         {/* Daftar Loop Pengulangan Materi Belajar */}
         {materi.map((item, index) => (
-          <div key={item.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div key={item.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden relative">
 
             {/* Judul Bab Modul */}
             <div className="px-6 py-4 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-slate-100 select-none">
-              <div className="flex items-center gap-3">
-                <span className="w-7 h-7 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center shrink-0">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                <h2 className="text-sm font-bold text-slate-800">{item.title}</h2>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="w-7 h-7 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center shrink-0">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <h2 className="text-sm font-bold text-slate-800">{item.title}</h2>
+                </div>
+                {isLocked && <span className="text-sm">🔒</span>}
               </div>
             </div>
 
-            <div className="p-6 space-y-5">
-              {/* OPTIMASI: Menggunakan whitespace-pre-wrap agar enter kalimat tata bahasa Jepang tampil rapi dan presisi */}
+            {/* AREA ISI TEORI DAN KUIS (AKAN TER-BLUR JIKA TERKUNCI) */}
+            <div className={`p-6 space-y-5 transition-all duration-300 ${isLocked ? "blur-md select-none pointer-events-none max-h-72 overflow-hidden" : ""}`}>
+              
+              {/* Isi Teori */}
               <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 text-sm leading-relaxed text-slate-700 whitespace-pre-wrap">
                 {item.content_body}
               </div>
 
-              {/* Kalimat Contoh Contoh (例文) */}
+              {/* Kalimat Contoh (例文) */}
               <div className="bg-indigo-50/60 border border-indigo-100 rounded-xl p-4">
                 <p className="text-xs font-bold text-indigo-600 mb-2 select-none">💬 Kalimat Contoh (例文):</p>
-                {/* OPTIMASI: whitespace-pre-wrap mandiri kebal dari bug tabulasi double slash */}
                 <p className="text-sm font-medium text-slate-800 whitespace-pre-wrap leading-relaxed">
                   {item.example_sentence}
                 </p>
               </div>
+
               {/* Flash Quiz Mandiri */}
               <div className="border-t border-dashed border-slate-200 pt-5 space-y-4">
                 <div className="flex items-center gap-2 select-none">
@@ -113,7 +143,6 @@ function LearnContent() {
                   <p className="text-xs font-bold text-amber-600 uppercase tracking-wider">Flash Quiz Pemahaman</p>
                 </div>
 
-                {/* OPTIMASI: Menggunakan whitespace-pre-wrap asli untuk keandalan enter kalimat Jepang */}
                 <p className="text-sm font-medium text-slate-800 whitespace-pre-wrap leading-relaxed">
                   {item.quiz_question}
                 </p>
@@ -150,7 +179,6 @@ function LearnContent() {
                       <button
                         key={opt.key}
                         disabled={isDone}
-                        // OPTIMASI: Menggunakan functional state update agar render klik tombol kuis super kilat tanpa lag
                         onClick={() => !isDone && setSelectedAns(prev => ({ ...prev, [item.id]: opt.key }))}
                         className={`flex items-center gap-3 p-3.5 rounded-xl border-2 text-left transition-all duration-200 ${style} ${!isDone ? "cursor-pointer" : "cursor-default"}`}
                       >
@@ -195,6 +223,33 @@ function LearnContent() {
                 )}
               </div>
             </div>
+
+            {/* LAYER PAYWALL INTERAKTIF: MUNCUL HANYA JIKA MATERI TERKUNCI (INDEX PERTAMA SAJA AGAR RAPI) */}
+            {isLocked && index === 0 && (
+              <div className="absolute inset-0 bg-gradient-to-t from-white via-white/80 to-transparent flex items-center justify-center p-6 pt-16">
+                <div className="w-full max-w-sm bg-white/90 backdrop-blur-md rounded-2xl border border-slate-200 shadow-xl p-6 text-center space-y-4 animate-fade-in">
+                  <div className="text-3xl select-none">🥷 💡</div>
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold text-slate-800">Buka Modul Tingkat Lanjut {level}</h3>
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                      Materi tingkat menengah dan mahir (N3 - N1) serta jutaan Token AI Claude eksklusif hanya dapat diakses oleh anggota premium.
+                    </p>
+                  </div>
+                  <Link href="/dashboard/billing" className="block">
+                    <button className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-xs shadow-md shadow-indigo-200 hover:opacity-95 transition active:scale-[0.98] cursor-pointer">
+                      Buka Akses Premium Sekarang 🚀
+                    </button>
+                  </Link>
+                  <p className="text-[9px] text-slate-400">Mulai dari Rp 49.000 via QRIS / VA iPaymu. Aktivasi instan.</p>
+                </div>
+              </div>
+            )}
+
+            {/* LAYER PENUTUP CADANGAN JIKA BUKAN INDEX PERTAMA AGAR USER TIDAK BISA MENYALIN TEKS */}
+            {isLocked && index > 0 && (
+              <div className="absolute inset-0 bg-white/30 backdrop-blur-sm flex items-center justify-center" />
+            )}
+
           </div>
         ))}
       </div>
