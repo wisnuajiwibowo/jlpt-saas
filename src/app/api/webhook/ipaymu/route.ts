@@ -5,9 +5,6 @@ import { Resend } from "resend"
 
 export const dynamic = "force-dynamic"
 
-// Inisialisasi API Key resmi Resend dari environment variable Vercel Anda
-const resend = new Resend(process.env.RESEND_API_KEY || "")
-
 export async function POST(req: Request) {
   try {
     // 1. Ambil data notifikasi resmi dari iPaymu
@@ -34,7 +31,6 @@ export async function POST(req: Request) {
 
     // 3. PROSES DATA JIKA STATUS TRANSAKSI BENAR-BENAR 'berhasil'
     if (status === "berhasil") {
-      // Pecah referenceId untuk mengambil tipe paket dan userId
       const parts = referenceId.split("-")
       const planTier = parts[1] || "PRO"
       const userId = parts[2]
@@ -56,13 +52,12 @@ export async function POST(req: Request) {
         return NextResponse.json({ status: "ok" })
       }
 
-      // Tentukan jumlah bonus kuota token berdasarkan tingkat keanggotaan
       let tokenBonus = 500000 
       if (planTier === "ELITE") {
         tokenBonus = 2000000 
       }
 
-      // Tarik alamat email dan nama lengkap siswa dari database untuk pengiriman nota
+      // Tarik alamat email dan nama lengkap siswa dari database
       const { data: userData } = await supabaseAdmin
         .from("users")
         .select("email, full_name")
@@ -71,9 +66,14 @@ export async function POST(req: Request) {
 
       const buyerEmail = userData?.email
       const buyerName = userData?.full_name || "Pelajar Juku"
+
+      // PERBAIKAN UTAMA: Inisialisasi objek Resend secara dinamis hanya saat fungsi POST terpanggil
+      // Ini menjamin compiler Next.js tidak akan mengalami kegagalan crash akibat string kosong saat build
+      const resendApiKey = process.env.RESEND_API_KEY || "re_mock_key_for_build"
+      const resend = new Resend(resendApiKey)
+
       // Jalankan operasi penambahan data dan pengiriman email secara paralel
       await Promise.all([
-        // A. Catat transaksi ke tabel history agar tidak bisa diserang replay attack
         supabaseAdmin.from("payments_history").insert({
           transaction_id: trxId,
           reference_id: referenceId,
@@ -82,19 +82,17 @@ export async function POST(req: Request) {
           status: "SUCCESS"
         }),
 
-        // B. Update kuota token langsung dijumlahkan di database via RPC untuk menghindari race condition
         supabaseAdmin.rpc("add_user_quota", { 
           target_user_id: userId, 
           quota_to_add: tokenBonus 
         }),
 
-        // C. INTEGRASI RESEND: Kirim nota kuitansi digital otomatis ke kotak masuk email siswa
-        buyerEmail ? resend.emails.send({
-          from: "Juku Premium <billing@://jukujlpt.com>", // Ganti dengan domain terverifikasi Anda nanti di Resend
+        buyerEmail && process.env.RESEND_API_KEY ? resend.emails.send({
+          from: "Juku Premium <billing@://jukujlpt.com>", 
           to: [buyerEmail],
           subject: `🧾 Kuitansi Pembayaran Paket ${planTier} - Juku JLPT`,
           html: `
-            <div style="font-family: sans-serif; max-w: 500px; margin: 0 auto; padding: 20px; border: 1px solid #f0f0f0; rounded-xl: 16px;">
+            <div style="font-family: sans-serif; max-w: 500px; margin: 0 auto; padding: 20px; border: 1px solid #f0f0f0; border-radius: 16px;">
               <div style="text-align: center; margin-bottom: 20px;">
                 <span style="font-size: 30px;">🎌</span>
                 <h2 style="color: #3b3c95; margin-top: 10px;">Terima Kasih atas Pembayaranmu!</h2>
@@ -129,19 +127,14 @@ export async function POST(req: Request) {
               <div style="background-color: #eeeffc; padding: 12px; border-radius: 10px; text-align: center; font-size: 11px; color: #3b3c95; font-weight: bold; margin-bottom: 20px;">
                 ⚡ Bonus +${tokenBonus.toLocaleString("id-ID")} Kuota Token AI telah dimasukkan ke akunmu!
               </div>
-
-              <p style="font-size: 11px; color: #999; text-align: center; line-height: normal;">
-                Sekarang kamu bisa menggunakan fitur analisis mendalam Claude AI tanpa batas. Jika ada kendala, hubungi tim bantuan Juku melalui dashboard belajar.
-              </p>
             </div>
           `
         }).catch(err => console.error("RESEND_DELIVERY_FAILED:", err)) : Promise.resolve(null)
       ])
 
-      console.log(`IPAYMU_WEBHOOK_SUCCESS: Sukses menambah ${tokenBonus} token & mengirim nota ke ${buyerEmail}`)
+      console.log(`IPAYMU_WEBHOOK_SUCCESS: Sukses menambah ${tokenBonus} token ke user ${userId}`)
     }
 
-    // Selalu kembalikan respon berstatus 'ok' agar server iPaymu berhenti mengirimkan data berulang kali
     return NextResponse.json({ status: "ok" })
   } catch (error: any) {
     console.error("IPAYMU_WEBHOOK_CRASH:", error)
