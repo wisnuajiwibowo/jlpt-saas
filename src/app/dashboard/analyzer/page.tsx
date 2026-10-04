@@ -1,195 +1,258 @@
 "use client"
 
 import { useState } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+
+interface GrammarPoint {
+  pattern: string
+  level: string
+  explanation: string
+}
+
+interface VocabularyItem {
+  word: string
+  reading: string
+  meaning: string
+  level: string
+}
+
+interface AnalysisResult {
+  jlpt_level: string
+  cefr_level: string
+  difficulty_score: number
+  grammar_points: GrammarPoint[]
+  vocabulary: VocabularyItem[]
+  trap_patterns: string[]
+  adapted_text: string
+}
 
 export default function AnalyzerPage() {
   const [text, setText] = useState("")
-  const [level, setLevel] = useState("N3")
+  const [targetLevel, setTargetLevel] = useState("N3")
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<any>(null)
+  const [result, setResult] = useState<AnalysisResult | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [openGrammarIdx, setOpenGrammarIdx] = useState<number | null>(null)
 
-  async function handleAnalyze(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleAnalyze() {
     if (!text.trim()) return
     setLoading(true)
+    setError(null)
     setResult(null)
+
     try {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, targetLevel: level }),
+        body: JSON.stringify({ text, targetLevel }),
       })
+
       const data = await res.json()
-      if (res.ok) setResult(data)
-      else alert(data.error || "Gagal memproses analisis")
-    } catch {
-      alert("Terjadi kesalahan koneksi")
+      if (!res.ok) throw new Error(data.error || "Gagal menganalisis teks")
+      setResult(data)
+    } catch (err: any) {
+      setError(err.message || "Terjadi kesalahan koneksi sistem")
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
-      <div className="max-w-5xl mx-auto space-y-6">
-
+    <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans">
+      <div className="max-w-6xl mx-auto space-y-6">
+        
         {/* Header */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-          <h1 className="text-lg font-bold text-slate-800">🤖 AI Text Analyzer</h1>
-          <p className="text-slate-500 text-xs mt-1">Bedah struktur bahasa Jepang, kosakata esensial, dan pola jebakan menggunakan AI Claude.</p>
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 select-none">
+          <h1 className="text-xl font-bold text-slate-800 tracking-tight">🤖 Ruang Bedah & Analisis AI Claude</h1>
+          <p className="text-slate-500 text-xs mt-1">
+            Masukkan teks bacaan bahasa Jepang (berita, potongan cerita, dll). Claude AI akan membedah partikel, struktur tata bahasa, kosakata esensial, serta pola jebakan ujian untukmu.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-
-          {/* Form Input */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
-            <h2 className="text-sm font-bold text-slate-700">Input Materi</h2>
-            <form onSubmit={handleAnalyze} className="space-y-4">
-              <div>
-                <label className="text-xs font-medium text-slate-600 block mb-1.5">Level Target</label>
-                <select
-                  className="w-full p-2.5 rounded-xl border border-slate-200 text-sm bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                  value={level}
-                  onChange={(e) => setLevel(e.target.value)}
-                >
-                  <option value="N5">N5 (Dasar)</option>
-                  <option value="N4">N4</option>
-                  <option value="N3">N3 (Menengah)</option>
-                  <option value="N2">N2</option>
-                  <option value="N1">N1 (Mahir)</option>
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-medium text-slate-600 block mb-1.5">Teks Bahasa Jepang</label>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          
+          {/* PANEL KIRI: INPUT PENGGUNA */}
+          <div className="lg:col-span-5 space-y-4">
+            <Card className="border border-slate-100 shadow-sm rounded-2xl bg-white overflow-hidden">
+              <CardHeader className="pb-3 select-none">
+                <CardTitle className="text-sm font-bold text-slate-700">Teks Orisinal Bahasa Jepang</CardTitle>
+                <CardDescription className="text-[11px]">Maksimal 2.000 karakter</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <textarea
-                  className="w-full p-3 rounded-xl border border-slate-200 text-sm h-40 bg-white text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-indigo-300"
-                  placeholder="Tempel artikel atau kalimat Jepang di sini..."
                   value={text}
                   onChange={(e) => setText(e.target.value)}
-                  maxLength={2000}
+                  placeholder="Ketik atau tempel kalimat bahasa Jepang di sini..."
+                  rows={8}
+                  className="w-full p-4 rounded-xl border border-slate-200 text-sm focus:border-indigo-500 focus:outline-none bg-slate-50/50 leading-relaxed font-sans placeholder:text-slate-400"
                 />
-                <p className="text-[10px] text-slate-400 text-right mt-1">{text.length}/2000</p>
+                
+                <div className="flex gap-2 items-center select-none">
+                  <label className="text-xs font-bold text-slate-500 shrink-0">Target Level:</label>
+                  <div className="flex gap-1 w-full">
+                    {["N5", "N4", "N3", "N2", "N1"].map((lvl) => (
+                      <button
+                        key={lvl}
+                        type="button"
+                        onClick={() => setTargetLevel(lvl)}
+                        className={`flex-1 py-1.5 rounded-lg border text-xs font-bold transition cursor-pointer ${
+                          targetLevel === lvl
+                            ? "bg-indigo-600 border-indigo-600 text-white shadow-sm"
+                            : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+                        }`}
+                      >
+                        {lvl}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <Button
+                  onClick={handleAnalyze}
+                  disabled={loading || !text.trim()}
+                  className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-md shadow-indigo-100 flex items-center justify-center gap-2 cursor-pointer disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+                >
+                  {loading ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Menganalisis Teks via Claude...
+                    </>
+                  ) : (
+                    "Mulai Bedah Kalimat ✨"
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Kotak Galat / Error */}
+            {error && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex gap-3 text-xs text-red-600 font-medium">
+                <span>⚠️</span>
+                <p>{error}</p>
               </div>
-              <button
-                type="submit"
-                disabled={loading || !text.trim()}
-                className={`w-full py-3 rounded-xl text-sm font-semibold transition-all ${
-                  loading || !text.trim()
-                    ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                    : "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200"
-                }`}
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Menganalisis...
-                  </span>
-                ) : "Mulai Bedah Teks 🔍"}
-              </button>
-            </form>
+            )}
           </div>
-
-          {/* Hasil Analisis */}
-          <div className="md:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-indigo-50 to-purple-50">
-              <h2 className="text-sm font-bold text-slate-800">Hasil Analisis Gaya Shin Kanzen Master</h2>
-            </div>
-
+          {/* PANEL KANAN: HASIL BEDAHAN AI */}
+          <div className="lg:col-span-7 space-y-6">
             {!result && !loading && (
-              <div className="flex flex-col items-center justify-center py-20 text-center px-6">
-                <span className="text-5xl mb-4">🔬</span>
-                <p className="text-slate-500 text-sm font-medium">Masukkan teks di sebelah kiri</p>
-                <p className="text-slate-400 text-xs mt-1">AI akan membedah struktur, kosakata, dan pola jebakan JLPT</p>
+              <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-12 text-center text-slate-400 select-none">
+                <p className="text-4xl mb-3">🤖</p>
+                <p className="text-xs font-medium">Belum ada data analisis. Masukkan teks di panel kiri dan klik tombol untuk memulai belajar.</p>
               </div>
             )}
 
-            {loading && (
-              <div className="flex flex-col items-center justify-center py-20 gap-4">
-                <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                <p className="text-slate-500 text-sm animate-pulse">AI sedang menganalisis teks...</p>
+            {loading && !result && (
+              <div className="bg-white border border-slate-100 rounded-2xl p-12 text-center text-slate-400 space-y-3 select-none">
+                <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto" />
+                <p className="text-xs font-medium text-slate-500 animate-pulse">Claude AI sedang membaca struktur partikel teks Anda...</p>
               </div>
             )}
 
             {result && (
-              <div className="p-6 space-y-5 text-sm">
-
-                {/* Badge Level & Skor */}
-                <div className="flex flex-wrap gap-2">
-                  <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-3 py-1 rounded-full">
-                    🎯 Level Deteksi: {result.jlpt_level}
-                  </span>
-                  <span className="bg-purple-100 text-purple-700 text-xs font-bold px-3 py-1 rounded-full">
-                    CEFR: {result.cefr_level}
-                  </span>
-                  <span className="bg-slate-100 text-slate-700 text-xs font-bold px-3 py-1 rounded-full">
-                    Skor Kesulitan: {result.difficulty_score}/100
-                  </span>
+              <div className="space-y-6">
+                
+                {/* 1. Metrik Nilai Kesulitan */}
+                <div className="grid grid-cols-3 gap-3 select-none">
+                  <div className="bg-white p-4 rounded-xl border border-slate-100 text-center shadow-sm">
+                    <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wide">Level JLPT</span>
+                    <span className="text-lg font-black text-indigo-600 mt-0.5 block">{result.jlpt_level}</span>
+                  </div>
+                  <div className="bg-white p-4 rounded-xl border border-slate-100 text-center shadow-sm">
+                    <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wide">Level CEFR</span>
+                    <span className="text-lg font-black text-purple-600 mt-0.5 block">{result.cefr_level}</span>
+                  </div>
+                  <div className="bg-white p-4 rounded-xl border border-slate-100 text-center shadow-sm">
+                    <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wide">Skor Kesulitan</span>
+                    <span className="text-lg font-black text-orange-500 mt-0.5 block">{result.difficulty_score}/100</span>
+                  </div>
                 </div>
 
-                {/* Grammar Points */}
-                {result.grammar_points?.length > 0 && (
-                  <div className="space-y-2">
-                    <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">📌 Pola Tata Bahasa</h3>
-                    <div className="space-y-2">
-                      {result.grammar_points.map((g: any, i: number) => (
-                        <div key={i} className="bg-indigo-50 border border-indigo-100 rounded-xl p-3">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-bold text-indigo-700 text-sm">{g.pattern}</span>
-                            <span className="bg-indigo-200 text-indigo-700 text-[10px] font-bold px-1.5 py-0.5 rounded">{g.level}</span>
+                {/* 2. Teks Adaptif */}
+                <Card className="border border-slate-100 shadow-sm rounded-2xl bg-white overflow-hidden">
+                  <CardHeader className="pb-2 select-none">
+                    <CardTitle className="text-xs font-bold text-indigo-600">📄 Teks Adaptif (Rekomendasi Claude untuk Level {targetLevel}):</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-slate-800 font-medium text-base leading-relaxed whitespace-pre-wrap font-sans">
+                      {result.adapted_text}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* 3. Pola Jebakan Ujian */}
+                {result.trap_patterns && result.trap_patterns.length > 0 && (
+                  <div className="p-4 bg-amber-50/70 border border-amber-200/60 rounded-xl space-y-1.5 animate-pulse">
+                    <span className="text-xs font-bold text-amber-700 block select-none">🚨 Analisis Jebakan & Pola Distraktor Ujian Asli:</span>
+                    <ul className="list-disc list-inside text-xs text-slate-600 space-y-1 leading-relaxed">
+                      {result.trap_patterns.map((trap, i) => (
+                        <li key={i}>{trap}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* 4. Pembedahan Grammar Akordeon */}
+                <div className="space-y-2">
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide select-none">🎯 Bedah Tata Bahasa (Grammar Points)</h3>
+                  <div className="space-y-1.5">
+                    {result.grammar_points.map((gram, i) => (
+                      <div key={i} className="bg-white rounded-xl border border-slate-100 overflow-hidden shadow-sm">
+                        <button
+                          type="button"
+                          onClick={() => setOpenGrammarIdx(openGrammarIdx === i ? null : i)}
+                          className="w-full p-4 flex items-center justify-between text-left cursor-pointer hover:bg-slate-50/50"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="bg-slate-100 text-slate-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">{gram.level}</span>
+                            <span className="text-sm font-bold text-slate-800">{gram.pattern}</span>
                           </div>
-                          <p className="text-xs text-slate-600 leading-relaxed">{g.explanation}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Vocabulary */}
-                {result.vocabulary?.length > 0 && (
-                  <div className="space-y-2">
-                    <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">📖 Kosakata Penting</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {result.vocabulary.map((v: any, i: number) => (
-                        <div key={i} className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex items-start gap-2">
-                          <div>
-                            <span className="font-bold text-slate-800">{v.word}</span>
-                            <span className="text-slate-400 text-xs ml-1">({v.reading})</span>
-                            <p className="text-xs text-slate-500 mt-0.5">{v.meaning}</p>
+                          <span className="text-slate-400 text-xs select-none">{openGrammarIdx === i ? "▲" : "▼"}</span>
+                        </button>
+                        {openGrammarIdx === i && (
+                          <div className="px-4 pb-4 text-xs leading-relaxed text-slate-600 border-t border-slate-50 pt-3 bg-slate-50/30 whitespace-pre-wrap font-sans">
+                            {gram.explanation}
                           </div>
-                          <span className="ml-auto bg-slate-200 text-slate-600 text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0">{v.level}</span>
-                        </div>
-                      ))}
-                    </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
 
-                {/* Trap Patterns */}
-                {result.trap_patterns?.length > 0 && (
-                  <div className="space-y-2">
-                    <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">⚠️ Pola Jebakan</h3>
-                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-1.5">
-                      {result.trap_patterns.map((t: string, i: number) => (
-                        <p key={i} className="text-xs text-slate-600 flex gap-2">
-                          <span className="text-amber-500 shrink-0">•</span>{t}
-                        </p>
-                      ))}
-                    </div>
+                {/* 5. Tabel Kosakata Masif */}
+                <div className="space-y-2">
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide select-none">📖 Kosakata Esensial (Vocabulary List)</h3>
+                  <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase select-none">
+                          <th className="p-3">Kata (Kanji)</th>
+                          <th className="p-3">Furigana</th>
+                          <th className="p-3">Arti Indonesia</th>
+                          <th className="p-3 text-center">Level</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50">
+                        {result.vocabulary.map((vocab, i) => (
+                          <tr key={i} className="hover:bg-slate-50/30 text-slate-700 font-medium">
+                            <td className="p-3 font-bold text-slate-900 text-sm">{vocab.word}</td>
+                            <td className="p-3 text-slate-500">{vocab.reading}</td>
+                            <td className="p-3 text-slate-600">{vocab.meaning}</td>
+                            <td className="p-3 text-center select-none">
+                              <span className="bg-slate-100 text-slate-600 font-bold text-[9px] px-1.5 py-0.5 rounded">{vocab.level}</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                )}
+                </div>
 
-                {/* Adapted Text */}
-                {result.adapted_text && (
-                  <div className="space-y-2">
-                    <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider">✏️ Teks Adaptasi Level {level}</h3>
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-                      <p className="text-sm text-slate-700 leading-relaxed">{result.adapted_text}</p>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
           </div>
         </div>
+
       </div>
     </div>
   )
