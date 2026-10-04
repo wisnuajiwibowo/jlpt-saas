@@ -6,14 +6,14 @@ export default function BillingPage() {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
 
   // Fungsi alur ketika tombol beli diklik
-  async function handleCheckout(amount: number, planTier: string) {
+  async function handleCheckout(planTier: string) {
     setLoadingPlan(planTier)
     try {
-      // Memanggil loket API checkout yang sudah kita buat kemarin
+      // Memanggil loket API checkout yang aman (Hanya mengirimkan nama paket)
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount, planTier }),
+        body: JSON.stringify({ planTier }),
       })
       
       const data = await res.json()
@@ -32,7 +32,7 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+    <div className="min-h-screen bg-slate-50 p-6 font-sans">
       <div className="max-w-3xl mx-auto space-y-8">
 
         {/* Header */}
@@ -65,9 +65,9 @@ export default function BillingPage() {
             </div>
             <div className="px-6 pb-6">
               <button 
-                onClick={() => handleCheckout(49000, "PRO")}
+                onClick={() => handleCheckout("PRO")}
                 disabled={loadingPlan !== null}
-                className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:bg-slate-300 text-white text-sm font-semibold transition"
+                className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:bg-slate-300 text-white text-sm font-semibold transition cursor-pointer"
               >
                 {loadingPlan === "PRO" ? "Memproses..." : "Upgrade via iPaymu"}
               </button>
@@ -76,7 +76,7 @@ export default function BillingPage() {
 
           {/* Elite Plan */}
           <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl shadow-lg overflow-hidden flex flex-col relative">
-            <div className="absolute top-4 right-4 bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+            <div className="absolute top-4 right-4 bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full select-none">
               REKOMENDASI
             </div>
             <div className="p-6 border-b border-white/10">
@@ -98,9 +98,9 @@ export default function BillingPage() {
             </div>
             <div className="px-6 pb-6">
               <button 
-                onClick={() => handleCheckout(129000, "ELITE")}
+                onClick={() => handleCheckout("ELITE")}
                 disabled={loadingPlan !== null}
-                className="w-full py-3 rounded-xl bg-white disabled:bg-slate-100 text-indigo-700 text-sm font-bold hover:bg-indigo-50 transition"
+                className="w-full py-3 rounded-xl bg-white disabled:bg-slate-100 text-indigo-700 text-sm font-bold hover:bg-indigo-50 transition cursor-pointer"
               >
                 {loadingPlan === "ELITE" ? "Memproses..." : "Pilih Paket Elite ✨"}
               </button>
@@ -109,13 +109,11 @@ export default function BillingPage() {
         </div>
 
         {/* Info tambahan */}
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-center">
-          <p className="text-xs text-slate-500">
-  🔒 Pembayaran aman via <strong>iPaymu</strong>. Mendukung QRIS, VA, Retail. Aktivasi instan. 
-  Dengan bertransaksi, Anda menyetujui <a href="/dashboard/terms" className="text-indigo-600 underline font-semibold ml-1">Syarat Layanan & Kebijakan Kebijakan Refund</a> kami.
-</p>
-
-  
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-center select-none">
+          <p className="text-xs text-slate-500 leading-relaxed">
+            🔒 Pembayaran aman via <strong>iPaymu</strong>. Mendukung QRIS, VA, Retail. Aktivasi instan. 
+            Dengan bertransaksi, Anda menyetujui <a href="/dashboard/terms" className="text-indigo-600 underline font-semibold mx-1">Syarat Layanan & Kebijakan Refund</a> kami.
+          </p>
         </div>
       </div>
     </div>
